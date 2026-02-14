@@ -1,0 +1,18 @@
+services:
+  customers-db:
+    image: 'postgres:latest'
+    environment:
+      - POSTGRES_PASSWORD=Local123
+      - POSTGRES_USER=customers
+      - POSTGRES_DB=customers
+    ports:
+      - "5432:5432"
+  accounts-db:
+    image: 'postgres:latest'
+    environment:
+      - POSTGRES_PASSWORD=Local123
+      - POSTGRES_USER=accounts
+      - POSTGRES_DB=accounts
+    ports:
+      - "5433:5432"
+  
