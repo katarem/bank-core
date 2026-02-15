@@ -18,22 +18,20 @@ public class CustomerExceptionHandler {
     public ResponseEntity<Map<String, String>> duplicatedData(DataIntegrityViolationException ex) {
         
         String code = "CUSTOMER_CONFLICT";
-        String message = "Ya existe un cliente con características similares.";
+        StringBuilder messageBuilder = new StringBuilder();
 
-        if (ex.getMostSpecificCause() != null &&
-            ex.getMostSpecificCause().getMessage().contains("(dni)")) {
-            message = "El DNI ya está registrado";
-            code = "DUPLICATED_DNI";
-        } else if (ex.getMostSpecificCause() != null && ex.getMostSpecificCause().getMessage().contains("(email)")) {
-            message = "El email ya está registrado";
-            code = "DUPLICATED_EMAIL";
+        if (ex.getMostSpecificCause().getMessage().contains("(dni)")) {
+            messageBuilder.append("El DNI ya está registrado").append(",");
+        }
+        if (ex.getMostSpecificCause().getMessage().contains("(email)")) {
+            messageBuilder.append("El email ya está registrado").append(",");
         }
 
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(Map.of(
                         "code", code,
-                        "message", message,
+                        "message", messageBuilder.toString(),
                         "timestamp", Instant.now().toString()
                 ));
     }
