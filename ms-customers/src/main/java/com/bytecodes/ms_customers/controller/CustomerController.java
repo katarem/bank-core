@@ -1,5 +1,6 @@
 package com.bytecodes.ms_customers.controller;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,7 +23,7 @@ public class CustomerController {
     @PostMapping("/register")
     public ResponseEntity<Customer> registerUser(@RequestBody @Valid Customer customer) {
         Customer registered = service.registerCustomer(customer);
-        return ResponseEntity.ok(registered);
+        return ResponseEntity.status(HttpStatus.CREATED).body(registered);
     }
 
 }

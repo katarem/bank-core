@@ -24,7 +24,7 @@ public class CustomerExceptionHandler {
             ex.getMostSpecificCause().getMessage().contains("(dni)")) {
             message = "El DNI ya está registrado";
             code = "DUPLICATED_DNI";
-        } else if (ex.getMostSpecificCause().getMessage().contains("(email)")) {
+        } else if (ex.getMostSpecificCause() != null && ex.getMostSpecificCause().getMessage().contains("(email)")) {
             message = "El email ya está registrado";
             code = "DUPLICATED_EMAIL";
         }
@@ -42,7 +42,7 @@ public class CustomerExceptionHandler {
     public ResponseEntity<Map<String, String>> validationError(MethodArgumentNotValidException ex) {
         StringBuilder sb = new StringBuilder();
         for (ObjectError error : ex.getAllErrors()) {
-            sb.append(error.getDefaultMessage() + ",");
+            sb.append(error.getDefaultMessage()).append(",");
         }
         String errors = sb.toString();
         String timestamp = Instant.now().toString();
