@@ -22,10 +22,16 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getServletPath();
-        return path.startsWith("/actuator/health") || path.startsWith("/api/auth/") || path.equals("/actuator/prometheus");
-    }
+        String uri = request.getRequestURI();
+        String ctx = request.getContextPath();
+        if (ctx != null && !ctx.isEmpty()) {
+            uri = uri.substring(ctx.length());
+        }
 
+        return uri.startsWith("/api/auth/")
+                || uri.equals("/actuator/health")
+                || uri.equals("/actuator/prometheus");
+    }
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
