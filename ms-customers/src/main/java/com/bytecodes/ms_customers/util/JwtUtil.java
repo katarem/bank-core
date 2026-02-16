@@ -1,6 +1,8 @@
 package com.bytecodes.ms_customers.util;
 
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.JwtParser;
+import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.Getter;
@@ -10,6 +12,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.time.Clock;
 import java.util.Date;
 
 @Component
@@ -75,7 +78,7 @@ public class JwtUtil {
                 .parseSignedClaims(token);
 
         Date expiredBy = jwt.getPayload().getExpiration();
-        Date now = clock.now();
+        Date now = Date.from(clock.instant());
 
         return now.after(expiredBy);
     }
