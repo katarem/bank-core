@@ -46,7 +46,7 @@ public class CustomerService {
         return mapper.toModel(registered);
     }
 
-    public SuccessfulAuthResponse loginCustomer(@Valid final Customer customer) {
+    public SuccessfulAuthResponse loginCustomer(final Customer customer) {
 
         CustomerEntity databaseCustomer = repository.findByEmail(customer.getEmail())
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario " + customer.getEmail() + " no encontrado"));
