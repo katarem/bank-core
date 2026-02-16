@@ -1,11 +1,9 @@
 package com.bytecodes.ms_customers.controller;
 
+import com.bytecodes.ms_customers.response.SuccessfulAuthResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.bytecodes.ms_customers.model.Customer;
 import com.bytecodes.ms_customers.service.CustomerService;
@@ -26,4 +24,9 @@ public class CustomerController {
         return ResponseEntity.status(HttpStatus.CREATED).body(registered);
     }
 
+    @PostMapping("/login")
+    public ResponseEntity<SuccessfulAuthResponse> loginUser(@RequestBody @Valid Customer customer) {
+        SuccessfulAuthResponse response = service.loginCustomer(customer);
+        return ResponseEntity.ok(response);
+    }
 }
