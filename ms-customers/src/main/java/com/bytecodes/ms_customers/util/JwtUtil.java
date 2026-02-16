@@ -1,5 +1,6 @@
 package com.bytecodes.ms_customers.util;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
@@ -25,9 +26,6 @@ public class JwtUtil {
     @Getter
     @Value("${jwt.expiration}")
     private long expiration;
-
-    private final Clock clock;
-
 
     public String generateToken(Authentication auth) {
         String username = auth.getName();
@@ -67,21 +65,5 @@ public class JwtUtil {
                 .parseSignedClaims(token);
         return jwt.getPayload().getSubject();
     }
-
-    public boolean isExpired(String token) {
-
-        SecretKey key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
-
-        var jwt = Jwts.parser()
-                .verifyWith(key)
-                .build()
-                .parseSignedClaims(token);
-
-        Date expiredBy = jwt.getPayload().getExpiration();
-        Date now = Date.from(clock.instant());
-
-        return now.after(expiredBy);
-    }
-
 
 }

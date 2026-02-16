@@ -45,9 +45,8 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         String token = request.getHeader("Authorization").replace("Bearer ", "");
 
         boolean isValidToken = jwtUtil.validateToken(token);
-        boolean isExpired = jwtUtil.isExpired(token);
 
-        if(!isValidToken || isExpired){
+        if(!isValidToken){
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
