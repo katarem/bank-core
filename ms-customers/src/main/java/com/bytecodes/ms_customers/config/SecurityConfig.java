@@ -34,8 +34,11 @@ public class SecurityConfig {
                 auth.requestMatchers("/actuator/health","/api/auth/**", "/actuator/prometheus").permitAll()
                         .anyRequest().authenticated()
             )
-                .addFilterBefore(new JwtAuthorizationFilter(authService, jwtUtil), UsernamePasswordAuthenticationFilter.class);
-
+            .addFilterBefore(new JwtAuthorizationFilter(authService, jwtUtil), UsernamePasswordAuthenticationFilter.class)
+            .exceptionHandling(eh -> eh
+                                .authenticationEntryPoint((req, res, ex) -> res.sendError(401))
+                                .accessDeniedHandler((req, res, ex) -> res.sendError(403))
+                        );
         return http.build();
     }
 
