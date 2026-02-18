@@ -1,12 +1,15 @@
 package com.bytecodes.ms_customers.config;
 
 import com.bytecodes.ms_customers.service.AuthService;
+import com.bytecodes.ms_customers.service.UserDetailsServiceImpl;
 import com.bytecodes.ms_customers.util.JwtUtil;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -25,7 +28,8 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http,
                                     JwtUtil jwtUtil,
-                                    AuthService authService) throws Exception {
+                                    UserDetailsServiceImpl userDetailsService,
+                                    AuthenticationProvider authenticationProvider) throws Exception {
 
         http
             .csrf(AbstractHttpConfigurer::disable)
@@ -34,7 +38,8 @@ public class SecurityConfig {
                 auth.requestMatchers("/actuator/health","/api/auth/**", "/actuator/prometheus").permitAll()
                         .anyRequest().authenticated()
             )
-            .addFilterBefore(new JwtAuthorizationFilter(authService, jwtUtil), UsernamePasswordAuthenticationFilter.class)
+                .authenticationProvider(authenticationProvider)
+            .addFilterBefore(new JwtAuthorizationFilter(userDetailsService, jwtUtil), UsernamePasswordAuthenticationFilter.class)
             .exceptionHandling(eh -> eh
                                 .authenticationEntryPoint((req, res, ex) -> res.sendError(401))
                                 .accessDeniedHandler((req, res, ex) -> res.sendError(403))
@@ -43,20 +48,20 @@ public class SecurityConfig {
     }
 
     @Bean
-    PasswordEncoder passwordEncoder(){
+    PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
     @Bean
-    AuthenticationManager authenticationManager(HttpSecurity http,
-                                      AuthService authService,
-                                      PasswordEncoder passwordEncoder) throws Exception {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(authService);
+    AuthenticationProvider authenticationProvider(UserDetailsServiceImpl userDetailsService, PasswordEncoder passwordEncoder) {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder);
+        return provider;
+    }
 
-        return http.getSharedObject(AuthenticationManagerBuilder.class)
-                .authenticationProvider(provider)
-                .build();
+    @Bean
+    AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
     }
 
 

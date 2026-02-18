@@ -34,6 +34,9 @@ public class AuthServiceTest {
     private PasswordEncoder encoder;
 
     @Mock
+    private UserDetailsServiceImpl userDetailsService;
+
+    @Mock
     private AuthenticationManager manager;
 
     @Mock
@@ -174,48 +177,6 @@ public class AuthServiceTest {
 
     }
 
-    @Test
-    void load_user_by_username_returns_user() {
 
-        //given
-
-        Customer customer = new Customer();
-        customer.setEmail("customer@email.com");
-        customer.setPassword("MyPassword123!");
-
-        CustomerEntity foundUser = new CustomerEntity();
-        foundUser.setEmail(customer.getEmail());
-        foundUser.setPassword(customer.getPassword());
-        foundUser.setRole(UserRole.CUSTOMER);
-
-        //when
-        Mockito.when(repository.findByEmail(customer.getEmail()))
-                .thenReturn(Optional.of(foundUser));
-
-        //then
-        UserDetails loadedUser = service.loadUserByUsername("customer@email.com");
-
-        Assertions.assertNotNull(loadedUser);
-
-    }
-
-    @Test
-    void load_user_by_username_user_not_found() {
-
-        //given
-
-        Customer customer = new Customer();
-        customer.setEmail("customer@email.com");
-        customer.setPassword("MyPassword123!");
-
-        //when
-        Mockito.when(repository.findByEmail(customer.getEmail()))
-                .thenReturn(Optional.empty());
-
-        //then
-        Assertions.assertThrows(UsernameNotFoundException.class, () ->
-                service.loadUserByUsername("customer@email.com"));
-
-    }
 
 }

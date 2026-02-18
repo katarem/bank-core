@@ -11,9 +11,6 @@ import com.bytecodes.ms_customers.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -22,26 +19,13 @@ import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
-public class AuthService implements UserDetailsService {
+public class AuthService {
 
     private final CustomerRepository repository;
     private final CustomerMapper mapper = CustomerMapper.INSTANCE;
     private final AuthenticationManager authenticationManager;
     private final PasswordEncoder encoder;
     private final JwtUtil jwtUtil;
-
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-
-        CustomerEntity entity = repository.findByEmail(username)
-                .orElseThrow(() -> new UsernameNotFoundException(username));
-
-        return User.builder()
-                .username(entity.getEmail())
-                .password(entity.getPassword())
-                .roles(entity.getRole().name())
-                .build();
-    }
 
     public Customer registerCustomer (final Customer customer){
 

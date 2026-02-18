@@ -24,7 +24,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.stream.Stream;
 
-import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -43,7 +42,7 @@ public class AuthControllerTest {
     private AuthService service;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-    
+
     @Test
     void register_customer_created() throws Exception{
 
