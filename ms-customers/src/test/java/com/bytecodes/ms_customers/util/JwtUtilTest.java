@@ -1,6 +1,10 @@
 package com.bytecodes.ms_customers.util;
 
 import com.bytecodes.ms_customers.model.Customer;
+import com.bytecodes.ms_customers.model.UserRole;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -8,6 +12,8 @@ import org.mockito.InjectMocks;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import java.util.UUID;
 
 @SpringJUnitConfig
 public class JwtUtilTest {
@@ -23,10 +29,12 @@ public class JwtUtilTest {
         ReflectionTestUtils.setField(jwtUtil, "expiration", 86400000L);
 
         Customer customer = new Customer();
+        customer.setId(UUID.randomUUID());
+        customer.setRole(UserRole.CUSTOMER);
         customer.setEmail("email@email.com");
         customer.setPassword("contraseña");
 
-        token = jwtUtil.generateToken(new UsernamePasswordAuthenticationToken(customer.getEmail(), customer.getPassword()));
+        token = jwtUtil.generateToken(customer);
 
 
     }
@@ -35,10 +43,12 @@ public class JwtUtilTest {
     void create_token_successful() {
 
         Customer customer = new Customer();
+        customer.setId(UUID.randomUUID());
+        customer.setRole(UserRole.CUSTOMER);
         customer.setEmail("email@email.com");
         customer.setPassword("contraseña");
 
-        String generatedToken = jwtUtil.generateToken(new UsernamePasswordAuthenticationToken(customer.getEmail(), customer.getPassword()));
+        String generatedToken = jwtUtil.generateToken(customer);
         Assertions.assertNotNull(generatedToken);
         Assertions.assertFalse(generatedToken.isEmpty());
 
@@ -84,10 +94,12 @@ public class JwtUtilTest {
 
         ReflectionTestUtils.setField(jwtUtil, "expiration", 0L);
         Customer customer = new Customer();
+        customer.setId(UUID.randomUUID());
+        customer.setRole(UserRole.CUSTOMER);
         customer.setEmail("email@email.com");
         customer.setPassword("contraseña");
 
-        token = jwtUtil.generateToken(new UsernamePasswordAuthenticationToken(customer.getEmail(), customer.getPassword()));
+        token = jwtUtil.generateToken(customer);
 
 
         // when & then
@@ -111,6 +123,33 @@ public class JwtUtilTest {
 
         Assertions.assertThrows(Exception.class, () ->
                 jwtUtil.extractUsername(token));
+
+    }
+
+    @Test
+    void token_includes_role_and_customer_id() {
+        // given
+        Customer customer = new Customer();
+        customer.setRole(UserRole.ADMIN);
+        customer.setEmail("user@email.com");
+        customer.setId(UUID.randomUUID());
+
+        // when && then
+        String token = jwtUtil.generateToken(customer);
+
+        var jwt = Jwts.parser()
+                .verifyWith(Keys.hmacShaKeyFor(Decoders.BASE64.decode("xPHozB2HdjwZdfUGYXkZKnx1JgF+qwYdhQDrCDpO9U4=")))
+                .build()
+                .parseSignedClaims(token);
+
+        Assertions.assertNotNull(jwt);
+        Assertions.assertNotNull(jwt.getPayload());
+        Assertions.assertNotNull(jwt.getPayload().getSubject());
+        Assertions.assertNotNull(jwt.getPayload().get("customerId", String.class));
+        Assertions.assertNotNull(jwt.getPayload().get("role", String.class));
+
+        Assertions.assertEquals(customer.getId().toString(), jwt.getPayload().get("customerId", String.class));
+        Assertions.assertEquals(customer.getRole().name(), jwt.getPayload().get("role", String.class));
 
     }
 
