@@ -1,5 +1,7 @@
 package com.bytecodes.ms_customers.controller;
 
+import com.bytecodes.ms_customers.response.SuccessfulAuthResponse;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -7,9 +9,11 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -17,23 +21,41 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import com.bytecodes.ms_customers.model.Customer;
 import com.bytecodes.ms_customers.service.CustomerService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
 
 import java.util.stream.Stream;
 
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@AutoConfigureMockMvc(addFilters = false)
-@WebMvcTest(CustomerController.class)
+@AutoConfigureMockMvc
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@TestPropertySource(properties = {
+        "jwt.secret=bocnbRHda/WxWwAhMhCoxBmfK6mLWn/4o2r7STfN0M4=",
+        "jwt.expiration=86400000"
+})
 public class CustomerControllerTest {
 
     @Autowired
+    private WebApplicationContext context;
+
     private MockMvc mockMvc;
 
     @MockitoBean
     private CustomerService customerService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @BeforeEach
+    public void setup() {
+        mockMvc = MockMvcBuilders
+                .webAppContextSetup(context)
+                .apply(springSecurity())
+                .build();
+    }
+
 
     @Test
     void register_customer_created() throws Exception{
@@ -118,6 +140,63 @@ public class CustomerControllerTest {
                                 .content(objectMapper.writeValueAsString(customer))
                 )
                 .andExpect(status().isConflict());
+    }
+
+    @Test
+    void login_customer_ok() throws Exception {
+
+        // given
+        Customer auth = new Customer();
+        auth.setEmail("auth@auth.com");
+        auth.setPassword("MyPassword123");
+
+        // when
+        Mockito.when(customerService.loginCustomer(auth))
+                .thenReturn(SuccessfulAuthResponse.builder().build());
+
+        // then
+        mockMvc.perform(
+                MockMvcRequestBuilders
+                        .post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(auth))
+        )
+                .andExpect(status().isOk());
+
+    }
+
+    @Test
+    void login_customer_invalid_credentials() throws Exception {
+
+        // given
+        Customer auth = new Customer();
+        auth.setEmail("auth@auth.com");
+        auth.setPassword("MyPassword123");
+
+        // when
+        Mockito.when(customerService.loginCustomer(auth))
+                .thenThrow(BadCredentialsException.class);
+
+        // then
+        mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .post("/api/auth/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(auth))
+                )
+                .andExpect(status().isUnauthorized());
+
+    }
+
+    @ParameterizedTest
+    @MethodSource("badCustomersProvider")
+    void login_customer_bad_customer(Customer customer) throws Exception {
+        mockMvc.perform(
+                MockMvcRequestBuilders
+                        .post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(customer))
+        ).andExpect(status().isBadRequest());
     }
 
     private static Stream<Arguments> badCustomersProvider() {

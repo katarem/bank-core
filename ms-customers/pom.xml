@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.bytecodes</groupId>
 	<artifactId>ms-customers</artifactId>
-	<version>1.0.0</version>
+	<version>1.1.0</version>
 	<name>ms-customers</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>
@@ -36,6 +36,26 @@
 			<artifactId>mockito-core</artifactId>
 			<version>5.21.0</version>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-api</artifactId>
+			<version>0.13.0</version>
+			<scope>compile</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-impl</artifactId>
+			<version>0.13.0</version>
+			<scope>runtime</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-jackson</artifactId>
+			<version>0.13.0</version>
+			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.mapstruct</groupId>
