@@ -1,6 +1,7 @@
 package com.bytecodes.ms_customers.controller;
 
 import com.bytecodes.ms_customers.response.SuccessfulAuthResponse;
+import com.bytecodes.ms_customers.service.AuthService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final CustomerService service;
+    private final AuthService service;
 
     @PostMapping("/register")
     public ResponseEntity<Customer> registerUser(@RequestBody @Valid Customer customer) {

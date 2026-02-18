@@ -2,6 +2,7 @@ package com.bytecodes.ms_customers.controller;
 
 import com.bytecodes.ms_customers.handler.CustomerExceptionHandler;
 import com.bytecodes.ms_customers.response.SuccessfulAuthResponse;
+import com.bytecodes.ms_customers.service.AuthService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -19,7 +20,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import com.bytecodes.ms_customers.model.Customer;
-import com.bytecodes.ms_customers.service.CustomerService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.stream.Stream;
@@ -34,17 +34,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 })
 @AutoConfigureMockMvc(addFilters = false)
 @Import(CustomerExceptionHandler.class)
-public class CustomerControllerTest {
+public class AuthControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockitoBean
-    private CustomerService customerService;
+    private AuthService service;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-
-
+    
     @Test
     void register_customer_created() throws Exception{
 
@@ -55,7 +54,7 @@ public class CustomerControllerTest {
         customer.setPassword("Secure123!");
 
         // when (cuando le doy el payload como quiero que se comporte)
-        Mockito.when(customerService.registerCustomer(Mockito.any(Customer.class)))
+        Mockito.when(service.registerCustomer(Mockito.any(Customer.class)))
             .thenReturn(customer);
 
         // then (comprobamos el comportamiento ejecutando lo que vamos a probar)
@@ -117,7 +116,7 @@ public class CustomerControllerTest {
         customer.setPassword("Password123");
 
         // when
-        Mockito.when(customerService.registerCustomer(customer))
+        Mockito.when(service.registerCustomer(customer))
                         .thenThrow(exception);
 
         // then (comprobamos el comportamiento ejecutando lo que vamos a probar)
@@ -139,7 +138,7 @@ public class CustomerControllerTest {
         auth.setPassword("MyPassword123");
 
         // when
-        Mockito.when(customerService.loginCustomer(auth))
+        Mockito.when(service.loginCustomer(auth))
                 .thenReturn(SuccessfulAuthResponse.builder().build());
 
         // then
@@ -162,7 +161,7 @@ public class CustomerControllerTest {
         auth.setPassword("MyPassword123");
 
         // when
-        Mockito.when(customerService.loginCustomer(Mockito.any(Customer.class)))
+        Mockito.when(service.loginCustomer(Mockito.any(Customer.class)))
                 .thenThrow(BadCredentialsException.class);
 
         // then
