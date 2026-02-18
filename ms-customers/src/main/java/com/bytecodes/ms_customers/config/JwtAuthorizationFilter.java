@@ -1,6 +1,7 @@
 package com.bytecodes.ms_customers.config;
 
 import com.bytecodes.ms_customers.service.AuthService;
+import com.bytecodes.ms_customers.service.UserDetailsServiceImpl;
 import com.bytecodes.ms_customers.util.JwtUtil;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,7 +18,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
-    private final AuthService authService;
+    private final UserDetailsServiceImpl authService;
     private final JwtUtil jwtUtil;
 
     @Override

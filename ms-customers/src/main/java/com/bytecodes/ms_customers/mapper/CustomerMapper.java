@@ -1,5 +1,6 @@
 package com.bytecodes.ms_customers.mapper;
 
+import com.bytecodes.ms_customers.model.SafeCustomer;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
@@ -14,5 +15,7 @@ public interface CustomerMapper {
     Customer toModel(CustomerEntity entity);
 
     CustomerEntity toEntity(Customer model);
+
+    SafeCustomer toSafeModel(CustomerEntity entity);
 
 }

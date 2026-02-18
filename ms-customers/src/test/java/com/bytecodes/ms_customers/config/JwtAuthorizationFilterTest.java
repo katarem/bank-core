@@ -1,6 +1,7 @@
 package com.bytecodes.ms_customers.config;
 
 import com.bytecodes.ms_customers.service.AuthService;
+import com.bytecodes.ms_customers.service.UserDetailsServiceImpl;
 import com.bytecodes.ms_customers.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -30,6 +31,9 @@ class JwtAuthorizationFilterTest {
     AuthService authService;
 
     @Mock
+    UserDetailsServiceImpl userDetailsService;
+
+    @Mock
     JwtUtil jwtUtil;
 
     @Mock
@@ -39,7 +43,7 @@ class JwtAuthorizationFilterTest {
 
     @BeforeEach
     void setUp() {
-        filter = new JwtAuthorizationFilter(authService, jwtUtil);
+        filter = new JwtAuthorizationFilter(userDetailsService, jwtUtil);
         SecurityContextHolder.clearContext();
     }
 
@@ -137,7 +141,7 @@ class JwtAuthorizationFilterTest {
         // when
         when(jwtUtil.validateToken("valid-token")).thenReturn(true);
         when(jwtUtil.extractUsername("valid-token")).thenReturn("customer");
-        when(authService.loadUserByUsername("customer")).thenReturn(null);
+        when(userDetailsService.loadUserByUsername("customer")).thenReturn(null);
 
         // then
         filter.doFilterInternal(req, res, filterChain);
@@ -145,7 +149,7 @@ class JwtAuthorizationFilterTest {
         assertEquals(401, res.getStatus());
         verify(jwtUtil).validateToken("valid-token");
         verify(jwtUtil).extractUsername("valid-token");
-        verify(authService).loadUserByUsername("customer");
+        verify(userDetailsService).loadUserByUsername("customer");
         verifyNoInteractions(filterChain);
         assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
@@ -164,7 +168,7 @@ class JwtAuthorizationFilterTest {
         // when
         when(jwtUtil.validateToken("valid-token")).thenReturn(true);
         when(jwtUtil.extractUsername("valid-token")).thenReturn("customer");
-        when(authService.loadUserByUsername("customer")).thenReturn(user);
+        when(userDetailsService.loadUserByUsername("customer")).thenReturn(user);
 
         // then
         filter.doFilterInternal(req, res, filterChain);

@@ -1,35 +1,25 @@
 package com.bytecodes.ms_customers.controller;
 
 import com.bytecodes.ms_customers.handler.CustomerExceptionHandler;
-import com.bytecodes.ms_customers.response.SuccessfulAuthResponse;
+import com.bytecodes.ms_customers.model.SafeCustomer;
+import com.bytecodes.ms_customers.model.SafeUpdateCustomer;
+import com.bytecodes.ms_customers.service.CustomerService;
+import com.bytecodes.ms_customers.util.JwtUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import com.bytecodes.ms_customers.model.Customer;
-import com.bytecodes.ms_customers.service.CustomerService;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
-
-import java.util.stream.Stream;
-
-import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -45,183 +35,140 @@ public class CustomerControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private CustomerService customerService;
+    private CustomerService service;
+
+    private String userToken;
+
+    @MockitoBean
+    private JwtUtil jwtUtil;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-
-    @Test
-    void register_customer_created() throws Exception{
-
-        // given (solo los fields requeridos para minimizar el test)
-        Customer customer = new Customer();
-        customer.setEmail("test@ing.com");
-        customer.setDni("12345678L");
-        customer.setPassword("Secure123!");
-
-        // when (cuando le doy el payload como quiero que se comporte)
-        Mockito.when(customerService.registerCustomer(Mockito.any(Customer.class)))
-            .thenReturn(customer);
-
-        // then (comprobamos el comportamiento ejecutando lo que vamos a probar)
-        mockMvc.perform(
-            MockMvcRequestBuilders
-                .post("/api/auth/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(customer))
-        )
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.email").value(customer.getEmail()))
-                .andExpect(jsonPath("$.dni").value(customer.getDni()))
-                .andExpect(jsonPath("$.password").value(customer.getPassword()));
-
+    @BeforeEach
+    void setup() {
+        userToken = jwtUtil.generateToken(new UsernamePasswordAuthenticationToken("user@email.com", "PassWord123"));
     }
 
     @Test
-    void register_customer_bad_request() throws Exception{
-        // given (solo los fields requeridos para minimizar el test)
-        Customer customer = new Customer();
-        customer.setEmail("test@ing.com");
-        customer.setDni("12345678L");
-        customer.setPassword("Secu!");
-        // when (En este caso no debemos configurar comportamiento, ya que no llegará a nuestros mocks)
-
-        // then (comprobamos el comportamiento ejecutando lo que vamos a probar)
-        mockMvc.perform(
-                        MockMvcRequestBuilders
-                                .post("/api/auth/register")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(customer))
-                )
-                .andExpect(status().isBadRequest());
-    }
-
-    @ParameterizedTest
-    @MethodSource("badCustomersProvider")
-    void register_customer_bad_request_all(Customer customer) throws Exception {
-
-        // when (En este caso no debemos configurar comportamiento, ya que no llegará a nuestros mocks)
-
-        // then (comprobamos el comportamiento ejecutando lo que vamos a probar)
-        mockMvc.perform(
-                        MockMvcRequestBuilders
-                                .post("/api/auth/register")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(customer))
-                )
-                .andExpect(status().isBadRequest());
-    }
-
-    @ParameterizedTest
-    @MethodSource("conflictsProvider")
-    void register_customer_conflict(DataIntegrityViolationException exception) throws Exception {
-        // given
-        Customer customer = new Customer();
-        customer.setDni("12345678L");
-        customer.setEmail("email@mail.com");
-        customer.setPassword("Password123");
-
-        // when
-        Mockito.when(customerService.registerCustomer(customer))
-                        .thenThrow(exception);
-
-        // then (comprobamos el comportamiento ejecutando lo que vamos a probar)
-        mockMvc.perform(
-                        MockMvcRequestBuilders
-                                .post("/api/auth/register")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(customer))
-                )
-                .andExpect(status().isConflict());
-    }
-
-    @Test
-    void login_customer_ok() throws Exception {
+    void get_me_ok() throws Exception {
 
         // given
-        Customer auth = new Customer();
-        auth.setEmail("auth@auth.com");
-        auth.setPassword("MyPassword123");
+        var safeUser = new SafeCustomer();
+        safeUser.setFirstName("user");
 
-        // when
-        Mockito.when(customerService.loginCustomer(auth))
-                .thenReturn(SuccessfulAuthResponse.builder().build());
+        //when
+        Mockito.when(service.getMyProfile(Mockito.any(String.class)))
+                .thenReturn(safeUser);
 
-        // then
+        //then
         mockMvc.perform(
                 MockMvcRequestBuilders
-                        .post("/api/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(auth))
+                        .get("/api/customers/me")
+                        .header("Authorization", "Bearer " + userToken)
         )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.firstName").value("user"));
+
+    }
+
+    @Test
+    void get_me_user_not_found() throws Exception {
+
+        // given
+        var safeUser = new SafeCustomer();
+        safeUser.setFirstName("user");
+
+        //when
+        Mockito.when(service.getMyProfile(Mockito.any(String.class)))
+                        .thenThrow(new UsernameNotFoundException(""));
+
+        //then
+        mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .get("/api/customers/me")
+                                .header("Authorization", "Bearer " + userToken)
+                )
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("CUSTOMER_NOT_FOUND"));
+
+    }
+
+    @Test
+    void get_me_user_token_not_provided() throws Exception {
+
+        // given
+        var safeUser = new SafeCustomer();
+        safeUser.setFirstName("user");
+
+        //when && then
+        mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .get("/api/customers/me")
+                )
+                .andExpect(status().isBadRequest());
+
+    }
+
+    @Test
+    void put_me_ok() throws Exception {
+        // given
+        var safeUser = new SafeCustomer();
+        safeUser.setFirstName("user");
+
+        //when
+        Mockito.when(service.getMyProfile(Mockito.any(String.class)))
+                .thenReturn(safeUser);
+
+        //then
+        mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .put("/api/customers/me")
+                                .header("Authorization", "Bearer " + userToken)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(safeUser))
+                )
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void put_me_not_found() throws Exception {
+        // given
+        var safeUser = new SafeCustomer();
+        safeUser.setFirstName("user");
+
+        //when
+        Mockito.when(service.updateMyProfile(Mockito.any(String.class), Mockito.any(SafeUpdateCustomer.class)))
+                .thenThrow(new UsernameNotFoundException(""));
+
+        //then
+        mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .put("/api/customers/me")
+                                .header("Authorization", "Bearer " + userToken)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(safeUser))
+                )
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("CUSTOMER_NOT_FOUND"));
 
     }
 
     @Test
-    void login_customer_invalid_credentials() throws Exception {
+    void put_me_token_not_provided() throws Exception {
 
         // given
-        Customer auth = new Customer();
-        auth.setEmail("auth@auth.com");
-        auth.setPassword("MyPassword123");
+        var safeUser = new SafeCustomer();
+        safeUser.setFirstName("user");
 
-        // when
-        Mockito.when(customerService.loginCustomer(Mockito.any(Customer.class)))
-                .thenThrow(BadCredentialsException.class);
-
-        // then
+        //when && then
         mockMvc.perform(
                         MockMvcRequestBuilders
-                                .post("/api/auth/login")
+                                .put("/api/customers/me")
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(auth))
+                                .content(objectMapper.writeValueAsString(safeUser))
                 )
-                .andExpect(status().isUnauthorized());
-
+                .andExpect(status().isBadRequest());
     }
 
-    @ParameterizedTest
-    @MethodSource("badCustomersProvider")
-    void login_customer_bad_customer(Customer customer) throws Exception {
-        mockMvc.perform(
-                MockMvcRequestBuilders
-                        .post("/api/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(customer))
-        ).andExpect(status().isBadRequest());
-    }
-
-    private static Stream<Arguments> badCustomersProvider() {
-        Customer wrongEmail = new Customer();
-        wrongEmail.setEmail("a.com");
-
-        Customer wrongPassword = new Customer();
-        wrongPassword.setPassword("hola");
-
-        Customer wrongDni = new Customer();
-        wrongDni.setDni("L32432421");
-
-        return Stream.of(
-                Arguments.of(wrongEmail),
-                Arguments.of(wrongPassword),
-                Arguments.of(wrongDni)
-        );
-    }
-
-    private static Stream<Arguments> conflictsProvider() {
-        return Stream.of(
-                Arguments.of(new DataIntegrityViolationException(
-                        "constraint violation",
-                        new RuntimeException("duplicate key value violates unique constraint (dni)")
-                )),
-                Arguments.of(
-                        new DataIntegrityViolationException(
-                                "constraint violation",
-                                new RuntimeException("duplicate key value violates unique constraint (email)")
-                        )
-                )
-        );
-    }
 
 }
