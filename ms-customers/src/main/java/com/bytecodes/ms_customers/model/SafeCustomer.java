@@ -13,6 +13,7 @@ public class SafeCustomer {
     private String lastName;
     private String email;
     private String address;
+    private String phone;
     private CustomerStatus status;
     private UserRole role;
     private Instant createdAt;

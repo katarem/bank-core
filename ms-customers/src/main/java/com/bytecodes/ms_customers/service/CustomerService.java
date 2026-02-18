@@ -2,7 +2,7 @@ package com.bytecodes.ms_customers.service;
 
 import java.time.Instant;
 
-import com.bytecodes.ms_customers.model.SafeCustomer;
+import com.bytecodes.ms_customers.model.*;
 import com.bytecodes.ms_customers.response.SuccessfulAuthResponse;
 import com.bytecodes.ms_customers.util.JwtUtil;
 import jakarta.validation.Valid;
@@ -14,9 +14,6 @@ import org.springframework.stereotype.Service;
 
 import com.bytecodes.ms_customers.entity.CustomerEntity;
 import com.bytecodes.ms_customers.mapper.CustomerMapper;
-import com.bytecodes.ms_customers.model.Customer;
-import com.bytecodes.ms_customers.model.CustomerStatus;
-import com.bytecodes.ms_customers.model.UserRole;
 import com.bytecodes.ms_customers.repository.CustomerRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -72,5 +69,21 @@ public class CustomerService {
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario " + username + " no encontrado"));
 
         return mapper.toSafeModel(entity);
+    }
+
+    public SafeCustomer updateMyProfile(final String token, final SafeUpdateCustomer updated) {
+        String username = jwtUtil.extractUsername(token);
+
+        CustomerEntity entity = repository.findByEmail(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario " + username + " no encontrado"));
+
+        entity.setFirstName(updated.getFirstName());
+        entity.setLastName(updated.getLastName());
+        entity.setPhone(updated.getPhone());
+        entity.setAddress(updated.getAddress());
+
+        CustomerEntity updatedEntity = repository.save(entity);
+
+        return mapper.toSafeModel(updatedEntity);
     }
 }
