@@ -2,6 +2,7 @@ package com.bytecodes.ms_customers.service;
 
 import java.time.Instant;
 
+import com.bytecodes.ms_customers.model.SafeCustomer;
 import com.bytecodes.ms_customers.response.SuccessfulAuthResponse;
 import com.bytecodes.ms_customers.util.JwtUtil;
 import jakarta.validation.Valid;
@@ -62,5 +63,14 @@ public class CustomerService {
                 .tokenType("Bearer")
                 .customerId(databaseCustomer.getId().toString())
                 .build();
+    }
+
+    public SafeCustomer getMyProfile(final String token) {
+        String username = jwtUtil.extractUsername(token);
+
+        CustomerEntity entity = repository.findByEmail(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario " + username + " no encontrado"));
+
+        return mapper.toSafeModel(entity);
     }
 }
