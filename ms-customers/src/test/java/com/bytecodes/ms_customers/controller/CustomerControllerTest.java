@@ -1,6 +1,7 @@
 package com.bytecodes.ms_customers.controller;
 
 import com.bytecodes.ms_customers.handler.CustomerExceptionHandler;
+import com.bytecodes.ms_customers.model.Customer;
 import com.bytecodes.ms_customers.model.SafeCustomer;
 import com.bytecodes.ms_customers.model.SafeUpdateCustomer;
 import com.bytecodes.ms_customers.service.CustomerService;
@@ -46,7 +47,10 @@ public class CustomerControllerTest {
 
     @BeforeEach
     void setup() {
-        userToken = jwtUtil.generateToken(new UsernamePasswordAuthenticationToken("user@email.com", "PassWord123"));
+        Customer customer = new Customer();
+        customer.setEmail("user@email.com");
+        customer.setPassword("PassWord123");
+        userToken = jwtUtil.generateToken(customer);
     }
 
     @Test

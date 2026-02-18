@@ -45,13 +45,15 @@ public class AuthService {
 
     public SuccessfulAuthResponse loginCustomer(final Customer customer) {
 
-        CustomerEntity databaseCustomer = repository.findByEmail(customer.getEmail())
+        CustomerEntity databaseEntity = repository.findByEmail(customer.getEmail())
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario " + customer.getEmail() + " no encontrado"));
 
-        var authenticated = authenticationManager
+        authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(customer.getEmail(), customer.getPassword()));
 
-        String token = jwtUtil.generateToken(authenticated);
+        Customer databaseCustomer = mapper.toModel(databaseEntity);
+
+        String token = jwtUtil.generateToken(databaseCustomer);
 
         return SuccessfulAuthResponse.builder()
                 .token(token)

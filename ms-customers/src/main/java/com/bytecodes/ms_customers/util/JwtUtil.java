@@ -1,5 +1,6 @@
 package com.bytecodes.ms_customers.util;
 
+import com.bytecodes.ms_customers.model.Customer;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.JwtParser;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.time.Clock;
 import java.util.Date;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -27,17 +29,22 @@ public class JwtUtil {
     @Value("${jwt.expiration}")
     private long expiration;
 
-    public String generateToken(Authentication auth) {
-        String username = auth.getName();
+    public String generateToken(Customer customer) {
         Date now = new Date();
         Date exp = new Date(now.getTime() + expiration);
 
         SecretKey key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
 
+        Map<String, String> extraInfo = Map.of(
+                "customerId", customer.getId().toString(),
+                "role", customer.getRole().name()
+        );
+
         return Jwts.builder()
-                .subject(username)
+                .subject(customer.getEmail())
                 .issuedAt(now)
                 .expiration(exp)
+                .claims(extraInfo)
                 .signWith(key)
                 .compact();
     }

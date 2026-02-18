@@ -121,7 +121,7 @@ public class AuthServiceTest {
         Mockito.when(jwtUtil.getExpiration())
                         .thenReturn(86400000L);
 
-        Mockito.when(jwtUtil.generateToken(Mockito.any(Authentication.class)))
+        Mockito.when(jwtUtil.generateToken(Mockito.any(Customer.class)))
                 .thenReturn("");
 
         //then
