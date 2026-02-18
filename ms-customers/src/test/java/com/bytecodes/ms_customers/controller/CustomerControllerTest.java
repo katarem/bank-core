@@ -1,5 +1,6 @@
 package com.bytecodes.ms_customers.controller;
 
+import com.bytecodes.ms_customers.handler.CustomerExceptionHandler;
 import com.bytecodes.ms_customers.response.SuccessfulAuthResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -9,7 +10,9 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -30,31 +33,21 @@ import static org.springframework.security.test.web.servlet.setup.SecurityMockMv
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@AutoConfigureMockMvc
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@TestPropertySource(properties = {
+@WebMvcTest(value = CustomerController.class, properties = {
         "jwt.secret=bocnbRHda/WxWwAhMhCoxBmfK6mLWn/4o2r7STfN0M4=",
-        "jwt.expiration=86400000"
+        "jwt.expiration=86400000",
 })
+@AutoConfigureMockMvc(addFilters = false)
+@Import(CustomerExceptionHandler.class)
 public class CustomerControllerTest {
 
     @Autowired
-    private WebApplicationContext context;
-
     private MockMvc mockMvc;
 
     @MockitoBean
     private CustomerService customerService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-
-    @BeforeEach
-    public void setup() {
-        mockMvc = MockMvcBuilders
-                .webAppContextSetup(context)
-                .apply(springSecurity())
-                .build();
-    }
 
 
     @Test
@@ -174,7 +167,7 @@ public class CustomerControllerTest {
         auth.setPassword("MyPassword123");
 
         // when
-        Mockito.when(customerService.loginCustomer(auth))
+        Mockito.when(customerService.loginCustomer(Mockito.any(Customer.class)))
                 .thenThrow(BadCredentialsException.class);
 
         // then
