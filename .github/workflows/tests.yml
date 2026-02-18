@@ -1,0 +1,61 @@
+name: Unit Tests
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      customers: ${{ steps.filter.outputs.customers }}
+      accounts: ${{ steps.filter.outputs.accounts }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            customers:
+              - 'ms-customers/**'
+            accounts:
+              - 'ms-accounts/**'
+
+  unit-tests-ms-customers:
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.customers == 'true' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ms-customers
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: ms-customers/pom.xml
+
+      - run: mvn -B test
+
+  unit-tests-ms-accounts:
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.accounts == 'true' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ms-accounts
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: ms-accounts/pom.xml
+
+      - run: mvn -B test
