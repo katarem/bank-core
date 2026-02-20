@@ -1,0 +1,64 @@
+package com.bytecodes.ms_accounts.entity;
+
+import com.bytecodes.ms_accounts.model.AccountStatus;
+import com.bytecodes.ms_accounts.model.AccountType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.UUID;
+
+@Entity
+@Setter
+@Getter
+@EqualsAndHashCode
+@Table(name = "account")
+public class AccountEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+    @Column(unique = true, name = "account_number")
+    private String accountNumber;
+    private UUID customerId;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "account_type")
+    private AccountType accountType;
+    private String currency;
+    private BigDecimal balance;
+    private String alias;
+    @Enumerated(EnumType.STRING)
+    private AccountStatus status;
+    @Column(name = "daily_withdrawal_limit")
+    private BigDecimal dailyWithdrawalLimit;
+    @Column(name = "created_at")
+    private Instant createdAt;
+    @Column(name = "updated_at")
+    private Instant updatedAt;
+
+    @PrePersist
+    public void prePersist() {
+        this.balance = BigDecimal.ZERO;
+        this.status = AccountStatus.ACTIVE;
+        this.createdAt = Instant.now();
+        this.updatedAt = Instant.now();
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = Instant.now();
+    }
+
+}
