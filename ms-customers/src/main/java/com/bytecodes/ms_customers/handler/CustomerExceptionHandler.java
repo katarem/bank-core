@@ -3,6 +3,7 @@ package com.bytecodes.ms_customers.handler;
 import java.time.Instant;
 import java.util.Map;
 
+import com.bytecodes.ms_customers.util.ErrorDetails;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +18,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class CustomerExceptionHandler {
 
     @ExceptionHandler(value = {DataIntegrityViolationException.class})
-    public ResponseEntity<Map<String, String>> duplicatedData(DataIntegrityViolationException ex) {
+    public ResponseEntity<ErrorDetails> duplicatedData(DataIntegrityViolationException ex) {
         
         String code = "CUSTOMER_CONFLICT";
         StringBuilder messageBuilder = new StringBuilder();
@@ -31,42 +32,37 @@ public class CustomerExceptionHandler {
 
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
-                .body(Map.of(
-                        "code", code,
-                        "message", messageBuilder.toString(),
-                        "timestamp", Instant.now().toString()
-                ));
+                .body(ErrorDetails.builder()
+                        .code(code)
+                        .message(messageBuilder.toString())
+                        .timestamp(Instant.now())
+                        .build());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> validationError(MethodArgumentNotValidException ex) {
-        StringBuilder sb = new StringBuilder();
+    public ResponseEntity<ErrorDetails> validationError(MethodArgumentNotValidException ex) {
+        StringBuilder errors = new StringBuilder();
         for (ObjectError error : ex.getAllErrors()) {
-            sb.append(error.getDefaultMessage()).append(",");
+            errors.append(error.getDefaultMessage()).append(",");
         }
-        String errors = sb.toString();
-        String timestamp = Instant.now().toString();
-        String code = "INVALID_FIELDS";
 
         return ResponseEntity
             .badRequest()
-            .body(Map.of(
-                "code", code, 
-                "errors", errors, 
-                "timestamp", timestamp
-            ));
+            .body(ErrorDetails.builder()
+                    .code("INVALID_FIELDS")
+                    .message(errors.toString())
+                    .timestamp(Instant.now())
+                    .build());
 
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)
-    public ResponseEntity<Map<String, String>> userNotFound(UsernameNotFoundException ex) {
-        var response = Map.of(
-                "error", "CUSTOMER_NOT_FOUND",
-                "message", ex.getMessage(),
-                "timestamp", Instant.now().toString()
-        );
-
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    public ResponseEntity<ErrorDetails> userNotFound(UsernameNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorDetails.builder()
+                .code("CUSTOMER_NOT_FOUND")
+                .message(ex.getMessage())
+                .timestamp(Instant.now())
+                .build());
     }
 
     @ExceptionHandler(BadCredentialsException.class)
