@@ -93,7 +93,7 @@ public class CustomerControllerTest {
                                 .header("Authorization", "Bearer " + userToken)
                 )
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.error").value("CUSTOMER_NOT_FOUND"));
+                .andExpect(jsonPath("$.code").value("CUSTOMER_NOT_FOUND"));
 
     }
 
@@ -153,7 +153,7 @@ public class CustomerControllerTest {
                                 .content(objectMapper.writeValueAsString(safeUser))
                 )
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.error").value("CUSTOMER_NOT_FOUND"));
+                .andExpect(jsonPath("$.code").value("CUSTOMER_NOT_FOUND"));
 
     }
 
