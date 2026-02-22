@@ -1,9 +1,8 @@
-package com.bytecodes.ms_customers.config;
+package com.bytecodes.ms_accounts.config;
 
-import com.bytecodes.ms_customers.service.AuthService;
-import com.bytecodes.ms_customers.service.UserDetailsServiceImpl;
-import com.bytecodes.ms_customers.util.JwtUtil;
-import jakarta.servlet.*;
+import com.bytecodes.ms_accounts.util.JwtUtil;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +17,6 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
-    private final UserDetailsServiceImpl authService;
     private final JwtUtil jwtUtil;
 
     @Override
@@ -30,7 +28,6 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         }
 
         return uri.startsWith("/api/auth/")
-            || uri.matches("/api/customers/[0-9a-fA-F-]+/validate")
                 || uri.equals("/actuator/health")
                 || uri.startsWith("/swagger-ui/")
                 || uri.startsWith("/v3/api-docs")
@@ -54,20 +51,6 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
-
-        String username = jwtUtil.extractUsername(token);
-        UserDetails user = authService.loadUserByUsername(username);
-        if(user == null) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            return;
-        }
-
-        // Guardamos contexto de la autenticación en el resto de la llamada
-        UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
-
-        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-        SecurityContextHolder.getContext().setAuthentication(authentication);
 
         filterChain.doFilter(request, response);
     }
