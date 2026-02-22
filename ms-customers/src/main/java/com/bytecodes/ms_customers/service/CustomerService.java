@@ -2,7 +2,6 @@ package com.bytecodes.ms_customers.service;
 
 import java.time.Instant;
 import java.util.UUID;
-import java.util.Optional;
 
 import com.bytecodes.ms_customers.model.*;
 import com.bytecodes.ms_customers.response.SuccessfulAuthResponse;
@@ -57,17 +56,11 @@ public class CustomerService {
 
 
     public CustomerValidation validateCustomer(UUID customerId) {
+        CustomerEntity customer = repository.findById(customerId)
+                .orElseThrow(() -> new UsernameNotFoundException("El usuario no existe"));
 
-    Optional<CustomerEntity> customerOpt = repository.findById(customerId);
+        boolean isActive = customer.getStatus() == CustomerStatus.ACTIVE;
 
-    if (customerOpt.isEmpty()) {
-        throw new UsernameNotFoundException("El usuario no existe");
+        return new CustomerValidation(customerId, true, isActive, "Usuario encontrado");
     }
-
-    CustomerEntity customer = customerOpt.get();
-
-    boolean isActive = customer.getStatus() == CustomerStatus.ACTIVE;
-
-    return new CustomerValidation(customerId, true, isActive, "Usuario encontrado");
-}
 }

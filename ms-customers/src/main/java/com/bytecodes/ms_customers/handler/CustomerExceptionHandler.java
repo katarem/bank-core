@@ -1,7 +1,6 @@
 package com.bytecodes.ms_customers.handler;
 
 import java.time.Instant;
-import java.util.Map;
 
 import com.bytecodes.ms_customers.util.ErrorDetails;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -72,14 +71,12 @@ public class CustomerExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<Map<String, String>> invalidUuidFormat(MethodArgumentTypeMismatchException ex) {
-        var response = Map.of(
-                "error", "INVALID_UUID_FORMAT",
-                "message", "Formato de ID no válido. Introduce una ID válida",
-                "timestamp", Instant.now().toString()
-        );
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    public ResponseEntity<ErrorDetails> invalidUuidFormat(MethodArgumentTypeMismatchException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ErrorDetails.builder()
+                .code("INVALID_UUID_FORMAT")
+                .message("Formato de ID no válido. Introduce una ID válida")
+                .timestamp(Instant.now())
+                .build());
     }
 
 }

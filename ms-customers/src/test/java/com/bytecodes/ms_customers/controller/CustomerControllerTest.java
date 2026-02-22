@@ -229,7 +229,7 @@ public class CustomerControllerTest {
                                 .get("/api/customers/{customerId}/validate", customerId)
                 )
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.error").value("CUSTOMER_NOT_FOUND"))
+                .andExpect(jsonPath("$.code").value("CUSTOMER_NOT_FOUND"))
                 .andExpect(jsonPath("$.message").value("El usuario no existe"));
     }
 
@@ -243,7 +243,7 @@ public class CustomerControllerTest {
                                 .get("/api/customers/{customerId}/validate", invalidUuid)
                 )
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("INVALID_UUID_FORMAT"))
+                .andExpect(jsonPath("$.code").value("INVALID_UUID_FORMAT"))
                 .andExpect(jsonPath("$.message").value("Formato de ID no válido. Introduce una ID válida"));
     }
 

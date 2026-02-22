@@ -30,6 +30,7 @@ public class CustomerController {
     }
 
 
+    @CrossOrigin(origins = "${app.security.allowed-origin}")
     @GetMapping("/{customerId}/validate")
     public ResponseEntity<CustomerValidation> validateCustomer(
         @PathVariable UUID customerId) {
