@@ -29,6 +29,8 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
         return uri.startsWith("/api/auth/")
                 || uri.equals("/actuator/health")
+                || uri.startsWith("/swagger-ui/")
+                || uri.startsWith("/v3/api-docs")
                 || uri.equals("/actuator/prometheus");
     }
     @Override
