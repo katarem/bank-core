@@ -15,4 +15,21 @@ services:
       - POSTGRES_DB=accounts
     ports:
       - "5433:5432"
-  
+  ms-customers:
+    build: ./ms-customers
+    ports:
+      - "8081:8081"
+    depends_on:
+      - postgres-customers
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-customers:5432/customers_db
+  ms-accounts:
+    build: ./ms-accounts
+    ports:
+      - "8082:8082"
+    depends_on:
+      - postgres-accounts
+      - ms-customers
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-accounts:5432/accounts_db
+      CUSTOMERS_SERVICE_URL: http://ms-customers:8081

@@ -1,8 +1,10 @@
 package com.bytecodes.ms_accounts.service;
 
 import com.bytecodes.ms_accounts.client.CustomerClient;
+import com.bytecodes.ms_accounts.handler.exceptions.AccountNotFoundException;
 import com.bytecodes.ms_accounts.handler.exceptions.CreateAccountLimitExceededException;
 import com.bytecodes.ms_accounts.handler.exceptions.CustomerIsInactiveException;
+import com.bytecodes.ms_accounts.handler.exceptions.NotOwnAccountException;
 import com.bytecodes.ms_accounts.mapper.AccountMapper;
 import com.bytecodes.ms_accounts.entity.AccountEntity;
 import com.bytecodes.ms_accounts.model.Account;
@@ -51,6 +53,18 @@ public class AccountService {
         AccountEntity created = repository.save(entity);
 
         return mapper.toModel(created);
+    }
+
+    public Account getAccount(final UUID accountId, final String token) {
+        AccountEntity account = repository.findById(accountId)
+                .orElseThrow(() -> new AccountNotFoundException(accountId.toString()));
+
+        String customerId = (String) jwtUtil.extractClaim(token, JwtClaim.CUSTOMER_ID);
+        if (!customerId.equals(account.getCustomerId().toString())) {
+            throw new NotOwnAccountException();
+        }
+
+        return mapper.toModel(account);
     }
 
     /**

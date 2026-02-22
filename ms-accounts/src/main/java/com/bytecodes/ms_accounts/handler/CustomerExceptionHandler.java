@@ -1,14 +1,17 @@
 package com.bytecodes.ms_accounts.handler;
 
 import com.bytecodes.ms_accounts.handler.dto.ErrorDetails;
+import com.bytecodes.ms_accounts.handler.exceptions.AccountNotFoundException;
 import com.bytecodes.ms_accounts.handler.exceptions.CreateAccountLimitExceededException;
 import com.bytecodes.ms_accounts.handler.exceptions.CustomerIsInactiveException;
+import com.bytecodes.ms_accounts.handler.exceptions.NotOwnAccountException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -19,6 +22,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Clase que manejará las excepciones globales
@@ -76,16 +80,39 @@ public class CustomerExceptionHandler extends ResponseEntityExceptionHandler {
 
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
-        Map<String, Object> mapErrors = new HashMap<>();
 
         //De la excepción obtenemos la lista de errores
-        ex.getBindingResult().getFieldErrors().forEach(e -> {
-            //para cada error encontrado, lo agregamos en nuestro mapa. El campo y el mensaje
-            mapErrors.put(e.getField(), e.getDefaultMessage());
-        });
+        Map<String, String> mapErrors = ex.getBindingResult().getFieldErrors().stream()
+                .collect(Collectors.toMap(FieldError::getField,
+                error -> {
+            String errorMessage = error.getDefaultMessage();
+            return errorMessage != null ? errorMessage : "";
+        }));
 
         //return super.handleMethodArgumentNotValid(ex, headers, status, request);
         return ResponseEntity.status(status).body(mapErrors);
+    }
+
+    @ExceptionHandler(NotOwnAccountException.class)
+    public ResponseEntity<ErrorDetails> notOwnAccount(NotOwnAccountException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                ErrorDetails.builder()
+                        .code("ACCOUNT_ACCESS_NOT_GRANTED")
+                        .message(ex.getMessage())
+                        .timestamp(Instant.now())
+                        .build()
+        );
+    }
+
+    @ExceptionHandler(AccountNotFoundException.class)
+    public ResponseEntity<ErrorDetails> accountNotFound(NotOwnAccountException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                ErrorDetails.builder()
+                        .code("ACCOUNT_NOT_FOUND")
+                        .message(ex.getMessage())
+                        .timestamp(Instant.now())
+                        .build()
+        );
     }
 
 }
