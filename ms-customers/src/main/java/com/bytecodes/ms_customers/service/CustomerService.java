@@ -1,17 +1,21 @@
 package com.bytecodes.ms_customers.service;
 
 import java.time.Instant;
+import java.util.UUID;
+import java.util.Optional;
 
 import com.bytecodes.ms_customers.model.*;
 import com.bytecodes.ms_customers.response.SuccessfulAuthResponse;
 import com.bytecodes.ms_customers.util.JwtUtil;
 import jakarta.validation.Valid;
+
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.bytecodes.ms_customers.DTO.CustomerValidation;
 import com.bytecodes.ms_customers.entity.CustomerEntity;
 import com.bytecodes.ms_customers.mapper.CustomerMapper;
 import com.bytecodes.ms_customers.repository.CustomerRepository;
@@ -50,4 +54,20 @@ public class CustomerService {
 
         return mapper.toSafeModel(updatedEntity);
     }
+
+
+    public CustomerValidation validateCustomer(UUID customerId) {
+
+    Optional<CustomerEntity> customerOpt = repository.findById(customerId);
+
+    if (customerOpt.isEmpty()) {
+        throw new UsernameNotFoundException("El usuario no existe");
+    }
+
+    CustomerEntity customer = customerOpt.get();
+
+    boolean isActive = customer.getStatus() == CustomerStatus.ACTIVE;
+
+    return new CustomerValidation(customerId, true, isActive, "Usuario encontrado");
+}
 }

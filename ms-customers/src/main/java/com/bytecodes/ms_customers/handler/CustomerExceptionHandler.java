@@ -10,6 +10,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -72,6 +73,17 @@ public class CustomerExceptionHandler {
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<Void> badCredentialsError() {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Map<String, String>> invalidUuidFormat(MethodArgumentTypeMismatchException ex) {
+        var response = Map.of(
+                "error", "INVALID_UUID_FORMAT",
+                "message", "Formato de ID no válido. Introduce una ID válida",
+                "timestamp", Instant.now().toString()
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
 }

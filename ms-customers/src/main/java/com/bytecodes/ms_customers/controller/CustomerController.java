@@ -1,9 +1,13 @@
 package com.bytecodes.ms_customers.controller;
 
+import com.bytecodes.ms_customers.DTO.CustomerValidation;
 import com.bytecodes.ms_customers.model.SafeCustomer;
 import com.bytecodes.ms_customers.model.SafeUpdateCustomer;
 import com.bytecodes.ms_customers.service.CustomerService;
 import lombok.RequiredArgsConstructor;
+
+import java.util.UUID;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,4 +28,12 @@ public class CustomerController {
                                                         @RequestBody SafeUpdateCustomer updated) {
         return ResponseEntity.ok(customerService.updateMyProfile(token.replace("Bearer ", ""), updated));
     }
+
+
+    @GetMapping("/{customerId}/validate")
+    public ResponseEntity<CustomerValidation> validateCustomer(
+        @PathVariable UUID customerId) {
+
+    return ResponseEntity.ok(customerService.validateCustomer(customerId));
+}
 }

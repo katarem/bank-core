@@ -30,6 +30,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         }
 
         return uri.startsWith("/api/auth/")
+            || uri.matches("/api/customers/[0-9a-fA-F-]+/validate")
                 || uri.equals("/actuator/health")
                 || uri.equals("/actuator/prometheus");
     }
