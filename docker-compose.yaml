@@ -20,16 +20,20 @@ services:
     ports:
       - "8081:8081"
     depends_on:
-      - postgres-customers
+      - customers-db
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-customers:5432/customers_db
+      ACCOUNTS_SERVICE_URL: http://ms-accounts:8082
+      JWT_SECRET: UH2yuJBa8XcycMm3L5DS7LRRd9yJbD430W9CUH+V1uI=
+      JWT_EXPIRATION: 900000
   ms-accounts:
     build: ./ms-accounts
     ports:
       - "8082:8082"
     depends_on:
-      - postgres-accounts
+      - accounts-db
       - ms-customers
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-accounts:5432/accounts_db
       CUSTOMERS_SERVICE_URL: http://ms-customers:8081
+      JWT_SECRET: UH2yuJBa8XcycMm3L5DS7LRRd9yJbD430W9CUH+V1uI=
