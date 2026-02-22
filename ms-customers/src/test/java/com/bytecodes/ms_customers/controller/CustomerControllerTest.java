@@ -181,7 +181,7 @@ public class CustomerControllerTest {
     void get_validate_customer_exists_and_active() throws Exception {
 
         UUID customerId = UUID.randomUUID();
-                CustomerValidation validation = new CustomerValidation(customerId, true, true, "Usuario encontrado");
+                                CustomerValidation validation = new CustomerValidation(customerId, true, true);
 
         Mockito.when(service.validateCustomer(customerId))
                 .thenReturn(validation);
@@ -194,14 +194,14 @@ public class CustomerControllerTest {
                 .andExpect(jsonPath("$.customerId").value(customerId.toString()))
                 .andExpect(jsonPath("$.exists").value(true))
                 .andExpect(jsonPath("$.active").value(true))
-                .andExpect(jsonPath("$.message").value("Usuario encontrado"));
+                .andExpect(jsonPath("$.message").doesNotExist());
     }
 
     @Test
     void get_validate_customer_exists_but_inactive() throws Exception {
 
         UUID customerId = UUID.randomUUID();
-        CustomerValidation validation = new CustomerValidation(customerId, true, false, "Usuario encontrado");
+                CustomerValidation validation = new CustomerValidation(customerId, true, false);
 
         Mockito.when(service.validateCustomer(customerId))
                 .thenReturn(validation);
@@ -214,7 +214,7 @@ public class CustomerControllerTest {
                 .andExpect(jsonPath("$.customerId").value(customerId.toString()))
                 .andExpect(jsonPath("$.exists").value(true))
                 .andExpect(jsonPath("$.active").value(false))
-                .andExpect(jsonPath("$.message").value("Usuario encontrado"));
+                .andExpect(jsonPath("$.message").doesNotExist());
     }
 
     @Test

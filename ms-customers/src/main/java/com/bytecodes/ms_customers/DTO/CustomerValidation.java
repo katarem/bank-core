@@ -14,5 +14,4 @@ public class CustomerValidation {
     private UUID customerId;
     private boolean exists;
     private boolean isActive;
-    private String message;
 }

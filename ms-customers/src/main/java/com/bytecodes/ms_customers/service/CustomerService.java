@@ -61,6 +61,6 @@ public class CustomerService {
 
         boolean isActive = customer.getStatus() == CustomerStatus.ACTIVE;
 
-        return new CustomerValidation(customerId, true, isActive, "Usuario encontrado");
+        return new CustomerValidation(customerId, true, isActive);
     }
 }
