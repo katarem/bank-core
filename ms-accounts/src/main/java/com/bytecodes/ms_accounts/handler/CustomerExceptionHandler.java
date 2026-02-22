@@ -105,7 +105,7 @@ public class CustomerExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(AccountNotFoundException.class)
-    public ResponseEntity<ErrorDetails> accountNotFound(NotOwnAccountException ex) {
+    public ResponseEntity<ErrorDetails> accountNotFound(AccountNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                 ErrorDetails.builder()
                         .code("ACCOUNT_NOT_FOUND")
