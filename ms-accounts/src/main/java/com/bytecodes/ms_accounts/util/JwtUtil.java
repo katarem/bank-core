@@ -44,6 +44,7 @@ public class JwtUtil {
 
     public boolean validateToken(String token) {
         try {
+            token = cleanToken(token);
             SecretKey key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
             JwtParser parser = Jwts.parser()
                     .setSigningKey(key)
@@ -56,6 +57,7 @@ public class JwtUtil {
     }
 
     public String extractUsername(String token) {
+        token = cleanToken(token);
 
         SecretKey key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
 
@@ -66,8 +68,17 @@ public class JwtUtil {
         return jwt.getPayload().getSubject();
     }
 
-    //TODO: Obtener el customerId de token -> //jwt.getPayload().get("customerId", String.class);
+    private String cleanToken(String token) {
+        if (token != null && token.startsWith("Bearer ")) {
+            return token.substring(7);
+        }
+
+        return token;
+    }
+
     private Claims extractAllClaims(String token) {
+        token = cleanToken(token);
+
         SecretKey key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
 
         return Jwts.parser()

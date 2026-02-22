@@ -20,7 +20,6 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -28,7 +27,7 @@ import java.util.stream.Collectors;
  * Clase que manejará las excepciones globales
  */
 @RestControllerAdvice
-public class CustomerExceptionHandler extends ResponseEntityExceptionHandler {
+public class AccountExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(value = {
             CreateAccountLimitExceededException.class,
@@ -44,13 +43,56 @@ public class CustomerExceptionHandler extends ResponseEntityExceptionHandler {
                         .build());
     }
 
+    @ExceptionHandler(feign.FeignException.class)
+    public ResponseEntity<ErrorDetails> handleFeignException(feign.FeignException ex) {
+
+        HttpStatus status = HttpStatus.BAD_GATEWAY;
+        String message = "Error comunicándose con el microservicio customer";
+
+        if (ex.status() == 401) {//Sucede cuando el microservicio no existe o el token no es válido
+            status = HttpStatus.UNAUTHORIZED;
+            message = "No autorizado para acceder al microservicio customer";
+        } else if (ex.status() == 404) {
+            status = HttpStatus.NOT_FOUND;
+            message = "Cliente no encontrado en el microservicio customer";
+        } else if (ex.status() == 500) {
+            status = HttpStatus.BAD_GATEWAY;
+            message = "Error interno en el microservicio customer";
+        }
+
+        ErrorDetails error = ErrorDetails.builder()
+                .code("CUSTOMER_SERVICE_ERROR")
+                .message(message)
+                .timestamp(Instant.now())
+                .build();
+
+        return ResponseEntity.status(status).body(error);
+    }
+
     /**
-     * Excepción personalizada para los campos tipo enums
-     * @param ex
-     * @param headers
-     * @param status
-     * @param request
-     * @return
+     * Maneja la excepción {@link HttpMessageNotReadableException} que ocurre
+     * cuando el cuerpo de la petición no puede ser deserializado correctamente.
+     *
+     * <p>
+     * Esta implementación personaliza el mensaje de error cuando la causa
+     * corresponde a un valor inválido para un tipo {@code enum}, indicando
+     * explícitamente el valor recibido y los valores permitidos.
+     * </p>
+     *
+     * @param ex excepción lanzada cuando el mensaje HTTP no puede ser leído
+     *           o convertido al tipo esperado (por ejemplo, JSON mal formado
+     *           o valor inválido para un enum).
+     *
+     * @param headers cabeceras HTTP de la solicitud que generó la excepción.
+     *
+     * @param status código de estado HTTP que Spring propone para la respuesta.
+     *
+     * @param request contexto de la petición web actual que contiene
+     *                información adicional sobre la solicitud.
+     *
+     * @return {@link ResponseEntity} con código {@code 400 BAD_REQUEST}
+     *         y un objeto {@link ErrorDetails} que contiene el código de error,
+     *         el mensaje descriptivo y la marca de tiempo.
      */
     @Override
     protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {

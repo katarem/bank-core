@@ -36,13 +36,13 @@ public class AccountService {
 
         CustomerValidationResponse customerValidationResponse = customerClient.validateCustomer(customerId);
         if (!customerValidationResponse.isActive()) {
-            throw new CustomerIsInactiveException("El cliente no está activo. No es posible crear la cuenta.");
+            throw new CustomerIsInactiveException();
         }
 
         //Maximo 3 cuentas por cliente
         long count = repository.countByCustomerId(customerId);
         if (count >= MAX_ACCOUNT_BY_CLIENT) {
-            throw new CreateAccountLimitExceededException("El cliente ha alcanzado el máximo de cuentas permitidas");
+            throw new CreateAccountLimitExceededException();
         }
 
         AccountEntity entity = mapper.toEntity(account);

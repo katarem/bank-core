@@ -20,7 +20,7 @@ public class AccountController {
     @PostMapping
     public ResponseEntity<Account> registerAccount(@RequestBody @Valid Account account,
                                                    @RequestHeader(value = "Authorization") String token) {
-        Account accountCreated = service.registerAccount(account, token.replace("Bearer ", ""));
+        Account accountCreated = service.registerAccount(account, token);
         return ResponseEntity.status(HttpStatus.CREATED).body(accountCreated);
     }
 

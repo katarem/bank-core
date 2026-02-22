@@ -45,20 +45,4 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    /* TODO: Esto no aplica para mí ¿verdad?
-    @Bean
-    AuthenticationManager authenticationManager(HttpSecurity http,
-                                      AuthService authService,
-                                      PasswordEncoder passwordEncoder) throws Exception {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(authService);
-        provider.setPasswordEncoder(passwordEncoder);
-
-        return http.getSharedObject(AuthenticationManagerBuilder.class)
-                .authenticationProvider(provider)
-                .build();
-    }
-     */
-
-
-
 }
