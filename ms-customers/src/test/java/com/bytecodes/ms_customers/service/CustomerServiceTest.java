@@ -6,8 +6,8 @@ import com.bytecodes.ms_customers.model.SafeCustomer;
 import com.bytecodes.ms_customers.model.SafeUpdateCustomer;
 import com.bytecodes.ms_customers.repository.CustomerRepository;
 import com.bytecodes.ms_customers.util.JwtUtil;
-import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.JwtException;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -131,11 +131,11 @@ public class CustomerServiceTest {
 
         // when
         Mockito.when(jwtUtil.extractUsername(Mockito.any(String.class)))
-                .thenThrow(JwtException.class);
+               .thenThrow(JwtException.class);
 
         // then
         Assertions.assertThrows(JwtException.class, () ->
-                service.updateMyProfile("", new SafeUpdateCustomer()));
+               service.updateMyProfile("", new SafeUpdateCustomer()));
 
     }
 
