@@ -1,7 +1,6 @@
 package com.bytecodes.ms_customers.handler;
 
 import java.time.Instant;
-import java.util.Map;
 
 import com.bytecodes.ms_customers.util.ErrorDetails;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -11,6 +10,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -68,6 +68,15 @@ public class CustomerExceptionHandler {
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<Void> badCredentialsError() {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorDetails> invalidUuidFormat(MethodArgumentTypeMismatchException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ErrorDetails.builder()
+                .code("INVALID_UUID_FORMAT")
+                .message("Formato de ID no válido. Introduce una ID válida")
+                .timestamp(Instant.now())
+                .build());
     }
 
 }
