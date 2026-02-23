@@ -1,6 +1,6 @@
 package com.bytecodes.ms_customers.controller;
 
-import com.bytecodes.ms_customers.DTO.CustomerValidation;
+import com.bytecodes.ms_customers.dto.CustomerValidation;
 import com.bytecodes.ms_customers.handler.CustomerExceptionHandler;
 import com.bytecodes.ms_customers.model.Customer;
 import com.bytecodes.ms_customers.model.SafeCustomer;
@@ -16,7 +16,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;

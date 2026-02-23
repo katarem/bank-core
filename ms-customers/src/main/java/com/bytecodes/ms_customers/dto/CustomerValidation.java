@@ -1,4 +1,4 @@
-package com.bytecodes.ms_customers.DTO;
+package com.bytecodes.ms_customers.dto;
 
 import java.util.UUID;
 

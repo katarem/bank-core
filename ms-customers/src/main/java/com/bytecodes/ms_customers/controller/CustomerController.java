@@ -1,6 +1,6 @@
 package com.bytecodes.ms_customers.controller;
 
-import com.bytecodes.ms_customers.DTO.CustomerValidation;
+import com.bytecodes.ms_customers.dto.CustomerValidation;
 import com.bytecodes.ms_customers.model.SafeCustomer;
 import com.bytecodes.ms_customers.model.SafeUpdateCustomer;
 import com.bytecodes.ms_customers.service.CustomerService;
