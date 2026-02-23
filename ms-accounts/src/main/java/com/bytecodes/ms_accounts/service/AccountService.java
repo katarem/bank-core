@@ -10,6 +10,7 @@ import com.bytecodes.ms_accounts.entity.AccountEntity;
 import com.bytecodes.ms_accounts.model.Account;
 import com.bytecodes.ms_accounts.model.JwtClaim;
 import com.bytecodes.ms_accounts.repository.AccountRepository;
+import com.bytecodes.ms_accounts.response.AccountSummary;
 import com.bytecodes.ms_accounts.response.CustomerValidationResponse;
 import com.bytecodes.ms_accounts.util.IbanUtil;
 import com.bytecodes.ms_accounts.util.JwtUtil;
@@ -17,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -65,6 +67,26 @@ public class AccountService {
         }
 
         return mapper.toModel(account);
+    }
+
+    public List<AccountSummary> getMyAccounts(final String token) {
+        UUID customerId = UUID.fromString((String) jwtUtil.extractClaim(token, JwtClaim.CUSTOMER_ID));
+        List<AccountEntity> entities = repository.findAllByCustomerId(customerId);
+        return entities.stream()
+                .map(this::mapToSummary)
+                .toList();
+    }
+
+    private AccountSummary mapToSummary(AccountEntity entity) {
+        return AccountSummary.builder()
+                .id(entity.getId())
+                .accountNumber(entity.getAccountNumber())
+                .accountType(entity.getAccountType())
+                .currency(entity.getCurrency())
+                .balance(entity.getBalance())
+                .alias(entity.getAlias())
+                .status(entity.getStatus())
+                .build();
     }
 
     /**
