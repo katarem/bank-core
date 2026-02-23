@@ -1,7 +1,10 @@
 package com.bytecodes.ms_customers.controller;
 
+import com.bytecodes.ms_customers.dto.request.LoginRequest;
+import com.bytecodes.ms_customers.dto.request.RegisterRequest;
+import com.bytecodes.ms_customers.dto.response.RegisterResponse;
 import com.bytecodes.ms_customers.handler.CustomerExceptionHandler;
-import com.bytecodes.ms_customers.response.SuccessfulAuthResponse;
+import com.bytecodes.ms_customers.dto.response.LoginResponse;
 import com.bytecodes.ms_customers.service.AuthService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -47,33 +50,32 @@ public class AuthControllerTest {
     void register_customer_created() throws Exception{
 
         // given (solo los fields requeridos para minimizar el test)
-        Customer customer = new Customer();
-        customer.setEmail("test@ing.com");
-        customer.setDni("12345678L");
-        customer.setPassword("Secure123!");
+        RegisterResponse request = new RegisterResponse();
+        request.setEmail("test@ing.com");
+        request.setDni("12345678L");
 
         // when (cuando le doy el payload como quiero que se comporte)
-        Mockito.when(service.registerCustomer(Mockito.any(Customer.class)))
-            .thenReturn(customer);
+        Mockito.when(service.registerCustomer(Mockito.any(RegisterRequest.class)))
+            .thenReturn(request);
 
         // then (comprobamos el comportamiento ejecutando lo que vamos a probar)
         mockMvc.perform(
             MockMvcRequestBuilders
                 .post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(customer))
+                .content(objectMapper.writeValueAsString(request))
         )
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.email").value(customer.getEmail()))
-                .andExpect(jsonPath("$.dni").value(customer.getDni()))
-                .andExpect(jsonPath("$.password").value(customer.getPassword()));
+                .andExpect(jsonPath("$.email").value(request.getEmail()))
+                .andExpect(jsonPath("$.dni").value(request.getDni()))
+                .andExpect(jsonPath("$.password").doesNotExist());
 
     }
 
     @Test
     void register_customer_bad_request() throws Exception{
         // given (solo los fields requeridos para minimizar el test)
-        Customer customer = new Customer();
+        RegisterRequest customer = new RegisterRequest();
         customer.setEmail("test@ing.com");
         customer.setDni("12345678L");
         customer.setPassword("Secu!");
@@ -90,8 +92,8 @@ public class AuthControllerTest {
     }
 
     @ParameterizedTest
-    @MethodSource("badCustomersProvider")
-    void register_customer_bad_request_all(Customer customer) throws Exception {
+    @MethodSource("badRegisterProvider")
+    void register_customer_bad_request_all(RegisterRequest request) throws Exception {
 
         // when (En este caso no debemos configurar comportamiento, ya que no llegará a nuestros mocks)
 
@@ -100,16 +102,33 @@ public class AuthControllerTest {
                         MockMvcRequestBuilders
                                 .post("/api/auth/register")
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(customer))
+                                .content(objectMapper.writeValueAsString(request))
                 )
                 .andExpect(status().isBadRequest());
+    }
+
+    private static Stream<Arguments> badRegisterProvider() {
+        RegisterRequest wrongEmail = new RegisterRequest();
+        wrongEmail.setEmail("a.com");
+
+        RegisterRequest wrongPassword = new RegisterRequest();
+        wrongPassword.setPassword("hola");
+
+        RegisterRequest wrongDni = new RegisterRequest();
+        wrongDni.setDni("hola");
+
+        return Stream.of(
+                Arguments.of(wrongEmail),
+                Arguments.of(wrongPassword),
+                Arguments.of(wrongDni)
+        );
     }
 
     @ParameterizedTest
     @MethodSource("conflictsProvider")
     void register_customer_conflict(DataIntegrityViolationException exception) throws Exception {
         // given
-        Customer customer = new Customer();
+        RegisterRequest customer = new RegisterRequest();
         customer.setDni("12345678L");
         customer.setEmail("email@mail.com");
         customer.setPassword("Password123");
@@ -132,13 +151,13 @@ public class AuthControllerTest {
     void login_customer_ok() throws Exception {
 
         // given
-        Customer auth = new Customer();
+        LoginRequest auth = new LoginRequest();
         auth.setEmail("auth@auth.com");
         auth.setPassword("MyPassword123");
 
         // when
         Mockito.when(service.loginCustomer(auth))
-                .thenReturn(SuccessfulAuthResponse.builder().build());
+                .thenReturn(LoginResponse.builder().build());
 
         // then
         mockMvc.perform(
@@ -155,12 +174,12 @@ public class AuthControllerTest {
     void login_customer_invalid_credentials() throws Exception {
 
         // given
-        Customer auth = new Customer();
+        LoginRequest auth = new LoginRequest();
         auth.setEmail("auth@auth.com");
         auth.setPassword("MyPassword123");
 
         // when
-        Mockito.when(service.loginCustomer(Mockito.any(Customer.class)))
+        Mockito.when(service.loginCustomer(Mockito.any(LoginRequest.class)))
                 .thenThrow(BadCredentialsException.class);
 
         // then
@@ -175,8 +194,8 @@ public class AuthControllerTest {
     }
 
     @ParameterizedTest
-    @MethodSource("badCustomersProvider")
-    void login_customer_bad_customer(Customer customer) throws Exception {
+    @MethodSource("badLoginProvider")
+    void login_customer_bad_customer(LoginRequest customer) throws Exception {
         mockMvc.perform(
                 MockMvcRequestBuilders
                         .post("/api/auth/login")
@@ -185,20 +204,16 @@ public class AuthControllerTest {
         ).andExpect(status().isBadRequest());
     }
 
-    private static Stream<Arguments> badCustomersProvider() {
-        Customer wrongEmail = new Customer();
+    private static Stream<Arguments> badLoginProvider() {
+        LoginRequest wrongEmail = new LoginRequest();
         wrongEmail.setEmail("a.com");
 
-        Customer wrongPassword = new Customer();
+        LoginRequest wrongPassword = new LoginRequest();
         wrongPassword.setPassword("hola");
-
-        Customer wrongDni = new Customer();
-        wrongDni.setDni("L32432421");
 
         return Stream.of(
                 Arguments.of(wrongEmail),
-                Arguments.of(wrongPassword),
-                Arguments.of(wrongDni)
+                Arguments.of(wrongPassword)
         );
     }
 

@@ -1,12 +1,15 @@
 package com.bytecodes.ms_customers.service;
 
+import com.bytecodes.ms_customers.dto.request.LoginRequest;
+import com.bytecodes.ms_customers.dto.request.RegisterRequest;
+import com.bytecodes.ms_customers.dto.response.RegisterResponse;
 import com.bytecodes.ms_customers.entity.CustomerEntity;
 import com.bytecodes.ms_customers.mapper.CustomerMapper;
 import com.bytecodes.ms_customers.model.Customer;
 import com.bytecodes.ms_customers.model.CustomerStatus;
 import com.bytecodes.ms_customers.model.UserRole;
 import com.bytecodes.ms_customers.repository.CustomerRepository;
-import com.bytecodes.ms_customers.response.SuccessfulAuthResponse;
+import com.bytecodes.ms_customers.dto.response.LoginResponse;
 import com.bytecodes.ms_customers.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -27,35 +30,35 @@ public class AuthService {
     private final PasswordEncoder encoder;
     private final JwtUtil jwtUtil;
 
-    public Customer registerCustomer (final Customer customer){
+    public RegisterResponse registerCustomer (final RegisterRequest customer){
 
-        CustomerEntity entity = mapper.toEntity(customer);
+        Customer model = mapper.toModel(customer);
 
-        entity.setStatus(CustomerStatus.ACTIVE);
-        entity.setRole(UserRole.CUSTOMER);
-        entity.setCreatedAt(Instant.now());
-        entity.setUpdatedAt(Instant.now());
+        model.setStatus(CustomerStatus.ACTIVE);
+        model.setRole(UserRole.CUSTOMER);
+        model.setCreatedAt(Instant.now());
+        model.setUpdatedAt(Instant.now());
 
-        entity.setPassword(encoder.encode(entity.getPassword()));
+        model.setPassword(encoder.encode(model.getPassword()));
 
-        CustomerEntity registered = repository.save(entity);
+        Customer registered = mapper.toModel(repository.save(mapper.toEntity(model)));
 
-        return mapper.toModel(registered);
+        return mapper.toRegisterResponse(registered);
     }
 
-    public SuccessfulAuthResponse loginCustomer(final Customer customer) {
+    public LoginResponse loginCustomer(final LoginRequest request) {
 
-        CustomerEntity databaseEntity = repository.findByEmail(customer.getEmail())
-                .orElseThrow(() -> new UsernameNotFoundException("Usuario " + customer.getEmail() + " no encontrado"));
+        CustomerEntity databaseEntity = repository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario " + request.getEmail() + " no encontrado"));
 
         authenticationManager
-                .authenticate(new UsernamePasswordAuthenticationToken(customer.getEmail(), customer.getPassword()));
+                .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
         Customer databaseCustomer = mapper.toModel(databaseEntity);
 
         String token = jwtUtil.generateToken(databaseCustomer);
 
-        return SuccessfulAuthResponse.builder()
+        return LoginResponse.builder()
                 .token(token)
                 .expiresIn(jwtUtil.getExpiration())
                 .tokenType("Bearer")

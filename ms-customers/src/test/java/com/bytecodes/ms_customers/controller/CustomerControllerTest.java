@@ -1,10 +1,10 @@
 package com.bytecodes.ms_customers.controller;
 
-import com.bytecodes.ms_customers.DTO.CustomerValidation;
+import com.bytecodes.ms_customers.dto.request.CustomerValidationResponse;
+import com.bytecodes.ms_customers.dto.response.GetProfileResponse;
 import com.bytecodes.ms_customers.handler.CustomerExceptionHandler;
 import com.bytecodes.ms_customers.model.Customer;
-import com.bytecodes.ms_customers.model.SafeCustomer;
-import com.bytecodes.ms_customers.model.SafeUpdateCustomer;
+import com.bytecodes.ms_customers.dto.request.UpdateProfileRequest;
 import com.bytecodes.ms_customers.service.CustomerService;
 import com.bytecodes.ms_customers.util.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,7 +16,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -60,7 +59,7 @@ public class CustomerControllerTest {
     void get_me_ok() throws Exception {
 
         // given
-        var safeUser = new SafeCustomer();
+        var safeUser = new GetProfileResponse();
         safeUser.setFirstName("user");
 
         //when
@@ -82,7 +81,7 @@ public class CustomerControllerTest {
     void get_me_user_not_found() throws Exception {
 
         // given
-        var safeUser = new SafeCustomer();
+        var safeUser = new GetProfileResponse();
         safeUser.setFirstName("user");
 
         //when
@@ -104,7 +103,7 @@ public class CustomerControllerTest {
     void get_me_user_token_not_provided() throws Exception {
 
         // given
-        var safeUser = new SafeCustomer();
+        var safeUser = new GetProfileResponse();
         safeUser.setFirstName("user");
 
         //when && then
@@ -119,7 +118,7 @@ public class CustomerControllerTest {
     @Test
     void put_me_ok() throws Exception {
         // given
-        var safeUser = new SafeCustomer();
+        var safeUser = new GetProfileResponse();
         safeUser.setFirstName("user");
 
         //when
@@ -140,11 +139,11 @@ public class CustomerControllerTest {
     @Test
     void put_me_not_found() throws Exception {
         // given
-        var safeUser = new SafeCustomer();
+        var safeUser = new GetProfileResponse();
         safeUser.setFirstName("user");
 
         //when
-        Mockito.when(service.updateMyProfile(Mockito.any(String.class), Mockito.any(SafeUpdateCustomer.class)))
+        Mockito.when(service.updateMyProfile(Mockito.any(String.class), Mockito.any(UpdateProfileRequest.class)))
                 .thenThrow(new UsernameNotFoundException(""));
 
         //then
@@ -164,7 +163,7 @@ public class CustomerControllerTest {
     void put_me_token_not_provided() throws Exception {
 
         // given
-        var safeUser = new SafeCustomer();
+        var safeUser = new GetProfileResponse();
         safeUser.setFirstName("user");
 
         //when && then
@@ -181,7 +180,7 @@ public class CustomerControllerTest {
     void get_validate_customer_exists_and_active() throws Exception {
 
         UUID customerId = UUID.randomUUID();
-                                CustomerValidation validation = new CustomerValidation(customerId, true, true);
+                                CustomerValidationResponse validation = new CustomerValidationResponse(customerId, true, true);
 
         Mockito.when(service.validateCustomer(customerId))
                 .thenReturn(validation);
@@ -201,7 +200,7 @@ public class CustomerControllerTest {
     void get_validate_customer_exists_but_inactive() throws Exception {
 
         UUID customerId = UUID.randomUUID();
-                CustomerValidation validation = new CustomerValidation(customerId, true, false);
+                CustomerValidationResponse validation = new CustomerValidationResponse(customerId, true, false);
 
         Mockito.when(service.validateCustomer(customerId))
                 .thenReturn(validation);

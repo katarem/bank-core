@@ -1,20 +1,17 @@
 package com.bytecodes.ms_customers.service;
 
-import java.time.Instant;
 import java.util.UUID;
 
+import com.bytecodes.ms_customers.dto.request.UpdateProfileRequest;
+import com.bytecodes.ms_customers.dto.response.GetProfileResponse;
+import com.bytecodes.ms_customers.dto.response.UpdateProfileResponse;
 import com.bytecodes.ms_customers.model.*;
-import com.bytecodes.ms_customers.response.SuccessfulAuthResponse;
 import com.bytecodes.ms_customers.util.JwtUtil;
-import jakarta.validation.Valid;
 
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.bytecodes.ms_customers.DTO.CustomerValidation;
+import com.bytecodes.ms_customers.dto.request.CustomerValidationResponse;
 import com.bytecodes.ms_customers.entity.CustomerEntity;
 import com.bytecodes.ms_customers.mapper.CustomerMapper;
 import com.bytecodes.ms_customers.repository.CustomerRepository;
@@ -29,16 +26,16 @@ public class CustomerService {
     private final CustomerMapper mapper = CustomerMapper.INSTANCE;
     private final JwtUtil jwtUtil;
 
-    public SafeCustomer getMyProfile(final String token) {
+    public GetProfileResponse getMyProfile(final String token) {
         String username = jwtUtil.extractUsername(token);
 
-        CustomerEntity entity = repository.findByEmail(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuario " + username + " no encontrado"));
+        Customer model = mapper.toModel(repository.findByEmail(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario " + username + " no encontrado")));
 
-        return mapper.toSafeModel(entity);
+        return mapper.toGetProfileResponse(model);
     }
 
-    public SafeCustomer updateMyProfile(final String token, final SafeUpdateCustomer updated) {
+    public UpdateProfileResponse updateMyProfile(final String token, final UpdateProfileRequest updated) {
         String username = jwtUtil.extractUsername(token);
 
         CustomerEntity entity = repository.findByEmail(username)
@@ -49,18 +46,18 @@ public class CustomerService {
         entity.setPhone(updated.getPhone());
         entity.setAddress(updated.getAddress());
 
-        CustomerEntity updatedEntity = repository.save(entity);
+        Customer model = mapper.toModel(repository.save(entity));
 
-        return mapper.toSafeModel(updatedEntity);
+        return mapper.toUpdateProfileResponse(model);
     }
 
 
-    public CustomerValidation validateCustomer(UUID customerId) {
+    public CustomerValidationResponse validateCustomer(UUID customerId) {
         CustomerEntity customer = repository.findById(customerId)
                 .orElseThrow(() -> new UsernameNotFoundException("El usuario no existe"));
 
         boolean isActive = customer.getStatus() == CustomerStatus.ACTIVE;
 
-        return new CustomerValidation(customerId, true, isActive);
+        return new CustomerValidationResponse(customerId, true, isActive);
     }
 }
