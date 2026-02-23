@@ -1,9 +1,10 @@
 package com.bytecodes.ms_customers.service;
 
+import com.bytecodes.ms_customers.dto.response.LoginRequest;
 import com.bytecodes.ms_customers.entity.CustomerEntity;
 import com.bytecodes.ms_customers.model.Customer;
 import com.bytecodes.ms_customers.repository.CustomerRepository;
-import com.bytecodes.ms_customers.dto.response.SuccessfulAuthResponse;
+import com.bytecodes.ms_customers.dto.response.LoginResponse;
 import com.bytecodes.ms_customers.util.JwtUtil;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -102,15 +103,15 @@ public class AuthServiceTest {
     void login_customer_ok() {
 
         //given
-        Customer customer = new Customer();
-        customer.setEmail("customer@email.com");
-        customer.setPassword("StrongPassword123");
+        LoginRequest request = new LoginRequest();
+        request.setEmail("customer@email.com");
+        request.setPassword("StrongPassword123");
 
         CustomerEntity entity = new CustomerEntity();
         entity.setId(UUID.randomUUID());
 
         //when
-        Mockito.when(repository.findByEmail(customer.getEmail()))
+        Mockito.when(repository.findByEmail(request.getEmail()))
                 .thenReturn(Optional.of(entity));
 
         Mockito.when(manager.authenticate(Mockito.any(Authentication.class)))
@@ -123,7 +124,7 @@ public class AuthServiceTest {
                 .thenReturn("");
 
         //then
-        SuccessfulAuthResponse response = service.loginCustomer(customer);
+        LoginResponse response = service.loginCustomer(request);
         Assertions.assertNotNull(response);
         Assertions.assertNotNull(response.getCustomerId());
         Assertions.assertEquals(entity.getId().toString(), response.getCustomerId());
@@ -136,14 +137,14 @@ public class AuthServiceTest {
     void login_customer_bad_credentials() {
 
         //given
-        Customer customer = new Customer();
-        customer.setEmail("customer@email.com");
-        customer.setPassword("ImSureThisIsTheOne");
+        LoginRequest request = new LoginRequest();
+        request.setEmail("customer@email.com");
+        request.setPassword("ImSureThisIsTheOne");
 
         CustomerEntity customerEntity = new CustomerEntity();
 
         //when
-        Mockito.when(repository.findByEmail(customer.getEmail()))
+        Mockito.when(repository.findByEmail(request.getEmail()))
                 .thenReturn(Optional.of(customerEntity));
 
         Mockito.when(manager.authenticate(Mockito.any(Authentication.class)))
@@ -151,24 +152,24 @@ public class AuthServiceTest {
 
         //then
         Assertions.assertThrows(BadCredentialsException.class, () ->
-                service.loginCustomer(customer));
+                service.loginCustomer(request));
 
     }
 
     @Test
     void login_customer_not_exists() {
         //given
-        Customer customer = new Customer();
-        customer.setEmail("juanitoperez@gmail.com");
-        customer.setPassword("SuperPassword23");
+        LoginRequest request = new LoginRequest();
+        request.setEmail("juanitoperez@gmail.com");
+        request.setPassword("SuperPassword23");
 
         //when
-        Mockito.when(repository.findByEmail(customer.getEmail()))
+        Mockito.when(repository.findByEmail(request.getEmail()))
                 .thenReturn(Optional.empty());
 
         //then
         UsernameNotFoundException ex = Assertions.assertThrows(UsernameNotFoundException.class, () ->
-                service.loginCustomer(customer));
+                service.loginCustomer(request));
 
         Assertions.assertNotNull(ex.getMessage());
         Assertions.assertEquals("Usuario " + "juanitoperez@gmail.com" + " no encontrado", ex.getMessage());

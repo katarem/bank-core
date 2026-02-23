@@ -1,7 +1,8 @@
 package com.bytecodes.ms_customers.controller;
 
+import com.bytecodes.ms_customers.dto.response.LoginRequest;
 import com.bytecodes.ms_customers.handler.CustomerExceptionHandler;
-import com.bytecodes.ms_customers.dto.response.SuccessfulAuthResponse;
+import com.bytecodes.ms_customers.dto.response.LoginResponse;
 import com.bytecodes.ms_customers.service.AuthService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -90,7 +91,7 @@ public class AuthControllerTest {
     }
 
     @ParameterizedTest
-    @MethodSource("badCustomersProvider")
+    @MethodSource("badRegisterProvider")
     void register_customer_bad_request_all(Customer customer) throws Exception {
 
         // when (En este caso no debemos configurar comportamiento, ya que no llegará a nuestros mocks)
@@ -103,6 +104,23 @@ public class AuthControllerTest {
                                 .content(objectMapper.writeValueAsString(customer))
                 )
                 .andExpect(status().isBadRequest());
+    }
+
+    private static Stream<Arguments> badRegisterProvider() {
+        Customer wrongEmail = new Customer();
+        wrongEmail.setEmail("a.com");
+
+        Customer wrongPassword = new Customer();
+        wrongPassword.setPassword("hola");
+
+        Customer wrongDni = new Customer();
+        wrongDni.setDni("hola");
+
+        return Stream.of(
+                Arguments.of(wrongEmail),
+                Arguments.of(wrongPassword),
+                Arguments.of(wrongDni)
+        );
     }
 
     @ParameterizedTest
@@ -132,13 +150,13 @@ public class AuthControllerTest {
     void login_customer_ok() throws Exception {
 
         // given
-        Customer auth = new Customer();
+        LoginRequest auth = new LoginRequest();
         auth.setEmail("auth@auth.com");
         auth.setPassword("MyPassword123");
 
         // when
         Mockito.when(service.loginCustomer(auth))
-                .thenReturn(SuccessfulAuthResponse.builder().build());
+                .thenReturn(LoginResponse.builder().build());
 
         // then
         mockMvc.perform(
@@ -155,12 +173,12 @@ public class AuthControllerTest {
     void login_customer_invalid_credentials() throws Exception {
 
         // given
-        Customer auth = new Customer();
+        LoginRequest auth = new LoginRequest();
         auth.setEmail("auth@auth.com");
         auth.setPassword("MyPassword123");
 
         // when
-        Mockito.when(service.loginCustomer(Mockito.any(Customer.class)))
+        Mockito.when(service.loginCustomer(Mockito.any(LoginRequest.class)))
                 .thenThrow(BadCredentialsException.class);
 
         // then
@@ -175,8 +193,8 @@ public class AuthControllerTest {
     }
 
     @ParameterizedTest
-    @MethodSource("badCustomersProvider")
-    void login_customer_bad_customer(Customer customer) throws Exception {
+    @MethodSource("badLoginProvider")
+    void login_customer_bad_customer(LoginRequest customer) throws Exception {
         mockMvc.perform(
                 MockMvcRequestBuilders
                         .post("/api/auth/login")
@@ -185,20 +203,16 @@ public class AuthControllerTest {
         ).andExpect(status().isBadRequest());
     }
 
-    private static Stream<Arguments> badCustomersProvider() {
-        Customer wrongEmail = new Customer();
+    private static Stream<Arguments> badLoginProvider() {
+        LoginRequest wrongEmail = new LoginRequest();
         wrongEmail.setEmail("a.com");
 
-        Customer wrongPassword = new Customer();
+        LoginRequest wrongPassword = new LoginRequest();
         wrongPassword.setPassword("hola");
-
-        Customer wrongDni = new Customer();
-        wrongDni.setDni("L32432421");
 
         return Stream.of(
                 Arguments.of(wrongEmail),
-                Arguments.of(wrongPassword),
-                Arguments.of(wrongDni)
+                Arguments.of(wrongPassword)
         );
     }
 

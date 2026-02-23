@@ -1,12 +1,13 @@
 package com.bytecodes.ms_customers.service;
 
+import com.bytecodes.ms_customers.dto.response.LoginRequest;
 import com.bytecodes.ms_customers.entity.CustomerEntity;
 import com.bytecodes.ms_customers.mapper.CustomerMapper;
 import com.bytecodes.ms_customers.model.Customer;
 import com.bytecodes.ms_customers.model.CustomerStatus;
 import com.bytecodes.ms_customers.model.UserRole;
 import com.bytecodes.ms_customers.repository.CustomerRepository;
-import com.bytecodes.ms_customers.dto.response.SuccessfulAuthResponse;
+import com.bytecodes.ms_customers.dto.response.LoginResponse;
 import com.bytecodes.ms_customers.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -43,19 +44,19 @@ public class AuthService {
         return mapper.toModel(registered);
     }
 
-    public SuccessfulAuthResponse loginCustomer(final Customer customer) {
+    public LoginResponse loginCustomer(final LoginRequest request) {
 
-        CustomerEntity databaseEntity = repository.findByEmail(customer.getEmail())
-                .orElseThrow(() -> new UsernameNotFoundException("Usuario " + customer.getEmail() + " no encontrado"));
+        CustomerEntity databaseEntity = repository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario " + request.getEmail() + " no encontrado"));
 
         authenticationManager
-                .authenticate(new UsernamePasswordAuthenticationToken(customer.getEmail(), customer.getPassword()));
+                .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
         Customer databaseCustomer = mapper.toModel(databaseEntity);
 
         String token = jwtUtil.generateToken(databaseCustomer);
 
-        return SuccessfulAuthResponse.builder()
+        return LoginResponse.builder()
                 .token(token)
                 .expiresIn(jwtUtil.getExpiration())
                 .tokenType("Bearer")

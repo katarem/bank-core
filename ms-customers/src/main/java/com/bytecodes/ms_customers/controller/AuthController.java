@@ -1,6 +1,7 @@
 package com.bytecodes.ms_customers.controller;
 
-import com.bytecodes.ms_customers.dto.response.SuccessfulAuthResponse;
+import com.bytecodes.ms_customers.dto.response.LoginRequest;
+import com.bytecodes.ms_customers.dto.response.LoginResponse;
 import com.bytecodes.ms_customers.service.AuthService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,8 +26,8 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<SuccessfulAuthResponse> loginUser(@RequestBody @Valid Customer customer) {
-        SuccessfulAuthResponse response = service.loginCustomer(customer);
+    public ResponseEntity<LoginResponse> loginUser(@RequestBody @Valid LoginRequest request) {
+        LoginResponse response = service.loginCustomer(request);
         return ResponseEntity.ok(response);
     }
 }

@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class SuccessfulAuthResponse {
+public class LoginResponse {
     private String token;
     private String tokenType;
     private long expiresIn;
