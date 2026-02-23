@@ -20,14 +20,14 @@ public class AccountController {
     @PostMapping
     public ResponseEntity<Account> registerAccount(@RequestBody @Valid Account account,
                                                    @RequestHeader(value = "Authorization") String token) {
-        Account accountCreated = service.registerAccount(account, token);
+        Account accountCreated = service.registerAccount(account, token.replace("Bearer ", ""));
         return ResponseEntity.status(HttpStatus.CREATED).body(accountCreated);
     }
 
     @GetMapping("/{accountId}")
     public ResponseEntity<Account> getAccountById(@PathVariable UUID accountId,
                                                   @RequestHeader(value = "Authorization") String token) {
-        Account account = service.getAccount(accountId, token);
+        Account account = service.getAccount(accountId, token.replace("Bearer ", ""));
         return ResponseEntity.ok(account);
     }
 }

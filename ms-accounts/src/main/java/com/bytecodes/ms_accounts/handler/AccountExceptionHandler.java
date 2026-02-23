@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
  * Clase que manejará las excepciones globales
  */
 @RestControllerAdvice
-public class AccountExceptionHandler extends ResponseEntityExceptionHandler {
+public class AccountExceptionHandler {
 
     @ExceptionHandler(value = {
             CreateAccountLimitExceededException.class,
@@ -46,19 +46,8 @@ public class AccountExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(feign.FeignException.class)
     public ResponseEntity<ErrorDetails> handleFeignException(feign.FeignException ex) {
 
-        HttpStatus status = HttpStatus.BAD_GATEWAY;
-        String message = "Error comunicándose con el microservicio customer";
-
-        if (ex.status() == 401) {//Sucede cuando el microservicio no existe o el token no es válido
-            status = HttpStatus.UNAUTHORIZED;
-            message = "No autorizado para acceder al microservicio customer";
-        } else if (ex.status() == 404) {
-            status = HttpStatus.NOT_FOUND;
-            message = "Cliente no encontrado en el microservicio customer";
-        } else if (ex.status() == 500) {
-            status = HttpStatus.BAD_GATEWAY;
-            message = "Error interno en el microservicio customer";
-        }
+        var status = ex.status() > 0 ? HttpStatusCode.valueOf(ex.status()) : HttpStatus.BAD_GATEWAY;//En pruebas se identificó que sí está abajo el ms-customer el status devuelto es -1 con el mensaje ConnectionRefused
+        String message = "Ha ocurrido un error interno de comunicación. Intente más tarde. Sí el problema persiste contacte al administrador";
 
         ErrorDetails error = ErrorDetails.builder()
                 .code("CUSTOMER_SERVICE_ERROR")
@@ -83,19 +72,13 @@ public class AccountExceptionHandler extends ResponseEntityExceptionHandler {
      *           o convertido al tipo esperado (por ejemplo, JSON mal formado
      *           o valor inválido para un enum).
      *
-     * @param headers cabeceras HTTP de la solicitud que generó la excepción.
-     *
-     * @param status código de estado HTTP que Spring propone para la respuesta.
-     *
-     * @param request contexto de la petición web actual que contiene
-     *                información adicional sobre la solicitud.
      *
      * @return {@link ResponseEntity} con código {@code 400 BAD_REQUEST}
      *         y un objeto {@link ErrorDetails} que contiene el código de error,
      *         el mensaje descriptivo y la marca de tiempo.
      */
-    @Override
-    protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorDetails> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
         String message = "Solicitud mal formada";
 
         // Validamos si la causa es por Enum inválido
@@ -120,7 +103,6 @@ public class AccountExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
-    @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
 
         //De la excepción obtenemos la lista de errores

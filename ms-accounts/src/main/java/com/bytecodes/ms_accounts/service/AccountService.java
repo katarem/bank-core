@@ -23,7 +23,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AccountService {
 
-    private final static Integer MAX_ACCOUNT_BY_CLIENT = 3;
+    private static final Integer MAX_ACCOUNT_BY_CLIENT = 3;
 
     private final AccountRepository repository;
     private final AccountMapper mapper = AccountMapper.INSTANCE;

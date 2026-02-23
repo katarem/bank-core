@@ -164,7 +164,7 @@ public class AccountControllerTest {
         UUID accountId = UUID.randomUUID();
 
         // when
-        Mockito.when(service.getAccount(accountId, "Bearer " + userToken))
+        Mockito.when(service.getAccount(accountId, userToken))//En el llamado a la capa service se debe realizar sin el "Bearer "
                 .thenThrow(new AccountNotFoundException(accountId.toString()));
 
         // then
@@ -182,7 +182,7 @@ public class AccountControllerTest {
         UUID accountId = UUID.randomUUID();
 
         // when
-        Mockito.when(service.getAccount(accountId, "Bearer " + userToken))
+        Mockito.when(service.getAccount(accountId, userToken))//El llamado a la capa service lo realiza sin el "Bearer ", dado que el controller lo quita
                 .thenThrow(new NotOwnAccountException());
 
         // then
