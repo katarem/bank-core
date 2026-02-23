@@ -2,7 +2,9 @@ package com.bytecodes.ms_customers.service;
 
 import java.util.UUID;
 
+import com.bytecodes.ms_customers.dto.request.UpdateProfileRequest;
 import com.bytecodes.ms_customers.dto.response.GetProfileResponse;
+import com.bytecodes.ms_customers.dto.response.UpdateProfileResponse;
 import com.bytecodes.ms_customers.model.*;
 import com.bytecodes.ms_customers.util.JwtUtil;
 
@@ -33,7 +35,7 @@ public class CustomerService {
         return mapper.toGetProfileResponse(model);
     }
 
-    public SafeCustomer updateMyProfile(final String token, final SafeUpdateCustomer updated) {
+    public UpdateProfileResponse updateMyProfile(final String token, final UpdateProfileRequest updated) {
         String username = jwtUtil.extractUsername(token);
 
         CustomerEntity entity = repository.findByEmail(username)
@@ -44,9 +46,9 @@ public class CustomerService {
         entity.setPhone(updated.getPhone());
         entity.setAddress(updated.getAddress());
 
-        CustomerEntity updatedEntity = repository.save(entity);
+        Customer model = mapper.toModel(repository.save(entity));
 
-        return mapper.toSafeModel(updatedEntity);
+        return mapper.toUpdateProfileResponse(model);
     }
 
 

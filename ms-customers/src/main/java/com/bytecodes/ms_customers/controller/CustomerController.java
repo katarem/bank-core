@@ -2,8 +2,8 @@ package com.bytecodes.ms_customers.controller;
 
 import com.bytecodes.ms_customers.dto.CustomerValidation;
 import com.bytecodes.ms_customers.dto.response.GetProfileResponse;
-import com.bytecodes.ms_customers.model.SafeCustomer;
-import com.bytecodes.ms_customers.model.SafeUpdateCustomer;
+import com.bytecodes.ms_customers.dto.response.UpdateProfileResponse;
+import com.bytecodes.ms_customers.dto.request.UpdateProfileRequest;
 import com.bytecodes.ms_customers.service.CustomerService;
 import lombok.RequiredArgsConstructor;
 
@@ -25,17 +25,15 @@ public class CustomerController {
     }
 
     @PutMapping("/me")
-    public ResponseEntity<SafeCustomer> updateMyProfile(@RequestHeader("Authorization") String token,
-                                                        @RequestBody SafeUpdateCustomer updated) {
+    public ResponseEntity<UpdateProfileResponse> updateMyProfile(@RequestHeader("Authorization") String token,
+                                                                 @RequestBody UpdateProfileRequest updated) {
         return ResponseEntity.ok(customerService.updateMyProfile(token.replace("Bearer ", ""), updated));
     }
 
 
     @CrossOrigin(origins = "${app.security.allowed-origin}")
     @GetMapping("/{customerId}/validate")
-    public ResponseEntity<CustomerValidation> validateCustomer(
-        @PathVariable UUID customerId) {
-
-    return ResponseEntity.ok(customerService.validateCustomer(customerId));
-}
+    public ResponseEntity<CustomerValidation> validateCustomer(@PathVariable UUID customerId) {
+        return ResponseEntity.ok(customerService.validateCustomer(customerId));
+    }
 }

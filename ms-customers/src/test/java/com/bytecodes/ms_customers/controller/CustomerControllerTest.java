@@ -4,8 +4,7 @@ import com.bytecodes.ms_customers.dto.CustomerValidation;
 import com.bytecodes.ms_customers.dto.response.GetProfileResponse;
 import com.bytecodes.ms_customers.handler.CustomerExceptionHandler;
 import com.bytecodes.ms_customers.model.Customer;
-import com.bytecodes.ms_customers.model.SafeCustomer;
-import com.bytecodes.ms_customers.model.SafeUpdateCustomer;
+import com.bytecodes.ms_customers.dto.request.UpdateProfileRequest;
 import com.bytecodes.ms_customers.service.CustomerService;
 import com.bytecodes.ms_customers.util.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -144,7 +143,7 @@ public class CustomerControllerTest {
         safeUser.setFirstName("user");
 
         //when
-        Mockito.when(service.updateMyProfile(Mockito.any(String.class), Mockito.any(SafeUpdateCustomer.class)))
+        Mockito.when(service.updateMyProfile(Mockito.any(String.class), Mockito.any(UpdateProfileRequest.class)))
                 .thenThrow(new UsernameNotFoundException(""));
 
         //then

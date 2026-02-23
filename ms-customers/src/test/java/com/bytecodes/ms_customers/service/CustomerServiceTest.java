@@ -1,21 +1,20 @@
 package com.bytecodes.ms_customers.service;
 
 import com.bytecodes.ms_customers.dto.response.GetProfileResponse;
+import com.bytecodes.ms_customers.dto.response.UpdateProfileResponse;
 import com.bytecodes.ms_customers.entity.CustomerEntity;
 import com.bytecodes.ms_customers.mapper.CustomerMapper;
 import com.bytecodes.ms_customers.model.SafeCustomer;
-import com.bytecodes.ms_customers.model.SafeUpdateCustomer;
+import com.bytecodes.ms_customers.dto.request.UpdateProfileRequest;
 import com.bytecodes.ms_customers.repository.CustomerRepository;
 import com.bytecodes.ms_customers.util.JwtUtil;
 import io.jsonwebtoken.JwtException;
 
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
@@ -92,7 +91,7 @@ public class CustomerServiceTest {
         var databaseEntity = new CustomerEntity();
         databaseEntity.setLastName("user");
 
-        var newUser = new SafeUpdateCustomer();
+        var newUser = new UpdateProfileRequest();
         newUser.setFirstName("other");
 
         var updated = new SafeCustomer();
@@ -107,7 +106,7 @@ public class CustomerServiceTest {
                 .thenReturn(Optional.of(databaseEntity));
 
         // then
-        SafeCustomer safe = service.updateMyProfile(userToken, newUser);
+        UpdateProfileResponse safe = service.updateMyProfile(userToken, newUser);
 
         Assertions.assertNotNull(safe);
         Assertions.assertEquals("other", safe.getFirstName());
@@ -123,7 +122,7 @@ public class CustomerServiceTest {
 
         // then
         Assertions.assertThrows(UsernameNotFoundException.class, () ->
-                service.updateMyProfile(userToken, new SafeUpdateCustomer()));
+                service.updateMyProfile(userToken, new UpdateProfileRequest()));
 
     }
 
@@ -136,7 +135,7 @@ public class CustomerServiceTest {
 
         // then
         Assertions.assertThrows(JwtException.class, () ->
-               service.updateMyProfile("", new SafeUpdateCustomer()));
+               service.updateMyProfile("", new UpdateProfileRequest()));
 
     }
 
