@@ -1,6 +1,6 @@
 package com.bytecodes.ms_customers.controller;
 
-import com.bytecodes.ms_customers.dto.response.LoginRequest;
+import com.bytecodes.ms_customers.dto.request.LoginRequest;
 import com.bytecodes.ms_customers.dto.response.LoginResponse;
 import com.bytecodes.ms_customers.service.AuthService;
 import org.springframework.http.HttpStatus;

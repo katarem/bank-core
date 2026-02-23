@@ -1,13 +1,8 @@
-package com.bytecodes.ms_customers.dto.response;
+package com.bytecodes.ms_customers.dto.request;
 
-import com.bytecodes.ms_customers.model.CustomerStatus;
-import com.bytecodes.ms_customers.model.UserRole;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Pattern;
 import lombok.Data;
-
-import java.time.Instant;
-import java.util.UUID;
 
 @Data
 public class LoginRequest {

@@ -1,6 +1,6 @@
 package com.bytecodes.ms_customers.service;
 
-import com.bytecodes.ms_customers.dto.response.LoginRequest;
+import com.bytecodes.ms_customers.dto.request.LoginRequest;
 import com.bytecodes.ms_customers.entity.CustomerEntity;
 import com.bytecodes.ms_customers.model.Customer;
 import com.bytecodes.ms_customers.repository.CustomerRepository;
