@@ -2,6 +2,7 @@ package com.bytecodes.ms_customers.service;
 
 import java.util.UUID;
 
+import com.bytecodes.ms_customers.dto.response.GetProfileResponse;
 import com.bytecodes.ms_customers.model.*;
 import com.bytecodes.ms_customers.util.JwtUtil;
 
@@ -23,13 +24,13 @@ public class CustomerService {
     private final CustomerMapper mapper = CustomerMapper.INSTANCE;
     private final JwtUtil jwtUtil;
 
-    public SafeCustomer getMyProfile(final String token) {
+    public GetProfileResponse getMyProfile(final String token) {
         String username = jwtUtil.extractUsername(token);
 
-        CustomerEntity entity = repository.findByEmail(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuario " + username + " no encontrado"));
+        Customer model = mapper.toModel(repository.findByEmail(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario " + username + " no encontrado")));
 
-        return mapper.toSafeModel(entity);
+        return mapper.toGetProfileResponse(model);
     }
 
     public SafeCustomer updateMyProfile(final String token, final SafeUpdateCustomer updated) {

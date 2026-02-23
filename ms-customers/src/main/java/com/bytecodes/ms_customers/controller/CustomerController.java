@@ -1,6 +1,7 @@
 package com.bytecodes.ms_customers.controller;
 
 import com.bytecodes.ms_customers.dto.CustomerValidation;
+import com.bytecodes.ms_customers.dto.response.GetProfileResponse;
 import com.bytecodes.ms_customers.model.SafeCustomer;
 import com.bytecodes.ms_customers.model.SafeUpdateCustomer;
 import com.bytecodes.ms_customers.service.CustomerService;
@@ -19,7 +20,7 @@ public class CustomerController {
     private final CustomerService customerService;
 
     @GetMapping("/me")
-    public ResponseEntity<SafeCustomer> getMyProfile(@RequestHeader(value = "Authorization") String token) {
+    public ResponseEntity<GetProfileResponse> getMyProfile(@RequestHeader(value = "Authorization") String token) {
         return ResponseEntity.ok(customerService.getMyProfile(token.replace("Bearer ", "")));
     }
 

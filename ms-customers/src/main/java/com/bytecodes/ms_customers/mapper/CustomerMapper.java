@@ -1,6 +1,7 @@
 package com.bytecodes.ms_customers.mapper;
 
 import com.bytecodes.ms_customers.dto.request.RegisterRequest;
+import com.bytecodes.ms_customers.dto.response.GetProfileResponse;
 import com.bytecodes.ms_customers.dto.response.RegisterResponse;
 import com.bytecodes.ms_customers.model.SafeCustomer;
 import org.mapstruct.Mapper;
@@ -23,5 +24,7 @@ public interface CustomerMapper {
     RegisterResponse toRegisterResponse(Customer customer);
 
     SafeCustomer toSafeModel(CustomerEntity entity);
+
+    GetProfileResponse toGetProfileResponse(Customer customer);
 
 }

@@ -1,5 +1,6 @@
 package com.bytecodes.ms_customers.service;
 
+import com.bytecodes.ms_customers.dto.response.GetProfileResponse;
 import com.bytecodes.ms_customers.entity.CustomerEntity;
 import com.bytecodes.ms_customers.mapper.CustomerMapper;
 import com.bytecodes.ms_customers.model.SafeCustomer;
@@ -51,7 +52,7 @@ public class CustomerServiceTest {
                 .thenReturn(Optional.of(databaseEntity));
 
         // then
-        SafeCustomer safe = service.getMyProfile(userToken);
+        GetProfileResponse safe = service.getMyProfile(userToken);
 
         Assertions.assertNotNull(safe);
         Assertions.assertEquals("user", safe.getFirstName());

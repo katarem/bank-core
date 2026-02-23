@@ -1,6 +1,7 @@
 package com.bytecodes.ms_customers.controller;
 
 import com.bytecodes.ms_customers.dto.CustomerValidation;
+import com.bytecodes.ms_customers.dto.response.GetProfileResponse;
 import com.bytecodes.ms_customers.handler.CustomerExceptionHandler;
 import com.bytecodes.ms_customers.model.Customer;
 import com.bytecodes.ms_customers.model.SafeCustomer;
@@ -59,7 +60,7 @@ public class CustomerControllerTest {
     void get_me_ok() throws Exception {
 
         // given
-        var safeUser = new SafeCustomer();
+        var safeUser = new GetProfileResponse();
         safeUser.setFirstName("user");
 
         //when
@@ -81,7 +82,7 @@ public class CustomerControllerTest {
     void get_me_user_not_found() throws Exception {
 
         // given
-        var safeUser = new SafeCustomer();
+        var safeUser = new GetProfileResponse();
         safeUser.setFirstName("user");
 
         //when
@@ -103,7 +104,7 @@ public class CustomerControllerTest {
     void get_me_user_token_not_provided() throws Exception {
 
         // given
-        var safeUser = new SafeCustomer();
+        var safeUser = new GetProfileResponse();
         safeUser.setFirstName("user");
 
         //when && then
@@ -118,7 +119,7 @@ public class CustomerControllerTest {
     @Test
     void put_me_ok() throws Exception {
         // given
-        var safeUser = new SafeCustomer();
+        var safeUser = new GetProfileResponse();
         safeUser.setFirstName("user");
 
         //when
@@ -139,7 +140,7 @@ public class CustomerControllerTest {
     @Test
     void put_me_not_found() throws Exception {
         // given
-        var safeUser = new SafeCustomer();
+        var safeUser = new GetProfileResponse();
         safeUser.setFirstName("user");
 
         //when
@@ -163,7 +164,7 @@ public class CustomerControllerTest {
     void put_me_token_not_provided() throws Exception {
 
         // given
-        var safeUser = new SafeCustomer();
+        var safeUser = new GetProfileResponse();
         safeUser.setFirstName("user");
 
         //when && then
