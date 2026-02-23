@@ -4,7 +4,6 @@ import com.bytecodes.ms_customers.dto.response.GetProfileResponse;
 import com.bytecodes.ms_customers.dto.response.UpdateProfileResponse;
 import com.bytecodes.ms_customers.entity.CustomerEntity;
 import com.bytecodes.ms_customers.mapper.CustomerMapper;
-import com.bytecodes.ms_customers.model.SafeCustomer;
 import com.bytecodes.ms_customers.dto.request.UpdateProfileRequest;
 import com.bytecodes.ms_customers.repository.CustomerRepository;
 import com.bytecodes.ms_customers.util.JwtUtil;
@@ -93,9 +92,6 @@ public class CustomerServiceTest {
 
         var newUser = new UpdateProfileRequest();
         newUser.setFirstName("other");
-
-        var updated = new SafeCustomer();
-        updated.setFirstName("other");
 
         // when
         Mockito.when(jwtUtil.extractUsername(Mockito.any(String.class)))
