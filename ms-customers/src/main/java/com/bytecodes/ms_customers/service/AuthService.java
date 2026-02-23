@@ -6,7 +6,7 @@ import com.bytecodes.ms_customers.model.Customer;
 import com.bytecodes.ms_customers.model.CustomerStatus;
 import com.bytecodes.ms_customers.model.UserRole;
 import com.bytecodes.ms_customers.repository.CustomerRepository;
-import com.bytecodes.ms_customers.response.SuccessfulAuthResponse;
+import com.bytecodes.ms_customers.dto.response.SuccessfulAuthResponse;
 import com.bytecodes.ms_customers.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;

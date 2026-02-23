@@ -1,4 +1,4 @@
-package com.bytecodes.ms_customers.response;
+package com.bytecodes.ms_customers.dto.response;
 
 import lombok.Builder;
 import lombok.Data;
