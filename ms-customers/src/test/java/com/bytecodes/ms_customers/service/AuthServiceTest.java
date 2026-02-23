@@ -1,6 +1,8 @@
 package com.bytecodes.ms_customers.service;
 
 import com.bytecodes.ms_customers.dto.request.LoginRequest;
+import com.bytecodes.ms_customers.dto.request.RegisterRequest;
+import com.bytecodes.ms_customers.dto.response.RegisterResponse;
 import com.bytecodes.ms_customers.entity.CustomerEntity;
 import com.bytecodes.ms_customers.model.Customer;
 import com.bytecodes.ms_customers.repository.CustomerRepository;
@@ -48,39 +50,38 @@ public class AuthServiceTest {
     void create_customer_ok(){
 
         // given
-        Customer customer = new Customer();
-        customer.setDni("12345678L");
-        customer.setEmail("customer@email.com");
-        customer.setPassword("Password123");
+        RegisterRequest request = new RegisterRequest();
+        request.setDni("12345678L");
+        request.setEmail("customer@email.com");
+        request.setPassword("Password123");
 
         CustomerEntity databaseCustomer = new CustomerEntity();
         databaseCustomer.setId(UUID.randomUUID());
-        databaseCustomer.setDni(customer.getDni());
-        databaseCustomer.setEmail(customer.getEmail());
-        databaseCustomer.setPassword(customer.getPassword());
+        databaseCustomer.setDni(request.getDni());
+        databaseCustomer.setEmail(request.getEmail());
+        databaseCustomer.setPassword(request.getPassword());
 
         // when
         Mockito.when(repository.save(Mockito.any(CustomerEntity.class)))
                 .thenReturn(databaseCustomer);
 
         // then
-        Customer registered = service.registerCustomer(customer);
+        RegisterResponse registered = service.registerCustomer(request);
 
         Assertions.assertNotNull(registered);
         Assertions.assertNotNull(registered.getId());
-        Assertions.assertEquals(customer.getDni(), registered.getDni());
-        Assertions.assertEquals(customer.getEmail(), registered.getEmail());
-        Assertions.assertEquals(customer.getPassword(), registered.getPassword());
+        Assertions.assertEquals(request.getDni(), registered.getDni());
+        Assertions.assertEquals(request.getEmail(), registered.getEmail());
 
     }
 
     @Test
     void create_customer_conflict(){
         // given
-        Customer customer = new Customer();
-        customer.setDni("12345678L");
-        customer.setEmail("customer@email.com");
-        customer.setPassword("Password123");
+        RegisterRequest request = new RegisterRequest();
+        request.setDni("12345678L");
+        request.setEmail("customer@email.com");
+        request.setPassword("Password123");
 
         // when
         Mockito.when(repository.save(Mockito.any(CustomerEntity.class)))
@@ -91,7 +92,7 @@ public class AuthServiceTest {
 
         // then
         var exception = Assertions.assertThrows(DataIntegrityViolationException.class, () ->
-                service.registerCustomer(customer));
+                service.registerCustomer(request));
 
         Assertions.assertEquals("conflict violation", exception.getMessage());
         Assertions.assertNotNull(exception.getMostSpecificCause());

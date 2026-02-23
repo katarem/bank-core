@@ -1,6 +1,8 @@
 package com.bytecodes.ms_customers.service;
 
 import com.bytecodes.ms_customers.dto.request.LoginRequest;
+import com.bytecodes.ms_customers.dto.request.RegisterRequest;
+import com.bytecodes.ms_customers.dto.response.RegisterResponse;
 import com.bytecodes.ms_customers.entity.CustomerEntity;
 import com.bytecodes.ms_customers.mapper.CustomerMapper;
 import com.bytecodes.ms_customers.model.Customer;
@@ -28,20 +30,20 @@ public class AuthService {
     private final PasswordEncoder encoder;
     private final JwtUtil jwtUtil;
 
-    public Customer registerCustomer (final Customer customer){
+    public RegisterResponse registerCustomer (final RegisterRequest customer){
 
-        CustomerEntity entity = mapper.toEntity(customer);
+        Customer model = mapper.toModel(customer);
 
-        entity.setStatus(CustomerStatus.ACTIVE);
-        entity.setRole(UserRole.CUSTOMER);
-        entity.setCreatedAt(Instant.now());
-        entity.setUpdatedAt(Instant.now());
+        model.setStatus(CustomerStatus.ACTIVE);
+        model.setRole(UserRole.CUSTOMER);
+        model.setCreatedAt(Instant.now());
+        model.setUpdatedAt(Instant.now());
 
-        entity.setPassword(encoder.encode(entity.getPassword()));
+        model.setPassword(encoder.encode(model.getPassword()));
 
-        CustomerEntity registered = repository.save(entity);
+        Customer registered = mapper.toModel(repository.save(mapper.toEntity(model)));
 
-        return mapper.toModel(registered);
+        return mapper.toRegisterResponse(registered);
     }
 
     public LoginResponse loginCustomer(final LoginRequest request) {

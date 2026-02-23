@@ -1,7 +1,9 @@
 package com.bytecodes.ms_customers.controller;
 
 import com.bytecodes.ms_customers.dto.request.LoginRequest;
+import com.bytecodes.ms_customers.dto.request.RegisterRequest;
 import com.bytecodes.ms_customers.dto.response.LoginResponse;
+import com.bytecodes.ms_customers.dto.response.RegisterResponse;
 import com.bytecodes.ms_customers.service.AuthService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,8 +22,8 @@ public class AuthController {
     private final AuthService service;
 
     @PostMapping("/register")
-    public ResponseEntity<Customer> registerUser(@RequestBody @Valid Customer customer) {
-        Customer registered = service.registerCustomer(customer);
+    public ResponseEntity<RegisterResponse> registerUser(@RequestBody @Valid RegisterRequest customer) {
+        RegisterResponse registered = service.registerCustomer(customer);
         return ResponseEntity.status(HttpStatus.CREATED).body(registered);
     }
 
