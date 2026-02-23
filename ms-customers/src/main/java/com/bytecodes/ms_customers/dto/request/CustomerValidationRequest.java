@@ -1,4 +1,4 @@
-package com.bytecodes.ms_customers.dto;
+package com.bytecodes.ms_customers.dto.request;
 
 import java.util.UUID;
 
@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 
-public class CustomerValidation {
+public class CustomerValidationRequest {
     
     private UUID customerId;
     private boolean exists;

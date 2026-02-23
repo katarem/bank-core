@@ -1,6 +1,6 @@
 package com.bytecodes.ms_customers.controller;
 
-import com.bytecodes.ms_customers.dto.CustomerValidation;
+import com.bytecodes.ms_customers.dto.request.CustomerValidationRequest;
 import com.bytecodes.ms_customers.dto.response.GetProfileResponse;
 import com.bytecodes.ms_customers.dto.response.UpdateProfileResponse;
 import com.bytecodes.ms_customers.dto.request.UpdateProfileRequest;
@@ -33,7 +33,7 @@ public class CustomerController {
 
     @CrossOrigin(origins = "${app.security.allowed-origin}")
     @GetMapping("/{customerId}/validate")
-    public ResponseEntity<CustomerValidation> validateCustomer(@PathVariable UUID customerId) {
+    public ResponseEntity<CustomerValidationRequest> validateCustomer(@PathVariable UUID customerId) {
         return ResponseEntity.ok(customerService.validateCustomer(customerId));
     }
 }
