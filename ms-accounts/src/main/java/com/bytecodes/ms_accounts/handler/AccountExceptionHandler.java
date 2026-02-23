@@ -5,6 +5,7 @@ import com.bytecodes.ms_accounts.handler.exceptions.AccountNotFoundException;
 import com.bytecodes.ms_accounts.handler.exceptions.CreateAccountLimitExceededException;
 import com.bytecodes.ms_accounts.handler.exceptions.CustomerIsInactiveException;
 import com.bytecodes.ms_accounts.handler.exceptions.NotOwnAccountException;
+import com.bytecodes.ms_accounts.handler.exceptions.UserNotFoundException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -133,6 +134,17 @@ public class AccountExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                 ErrorDetails.builder()
                         .code("ACCOUNT_NOT_FOUND")
+                        .message(ex.getMessage())
+                        .timestamp(Instant.now())
+                        .build()
+        );
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ErrorDetails> userNotFound(UserNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                ErrorDetails.builder()
+                        .code("CUSTOMER_NOT_FOUND")
                         .message(ex.getMessage())
                         .timestamp(Instant.now())
                         .build()

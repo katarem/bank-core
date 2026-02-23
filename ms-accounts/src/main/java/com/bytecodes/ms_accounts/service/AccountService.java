@@ -5,6 +5,7 @@ import com.bytecodes.ms_accounts.handler.exceptions.AccountNotFoundException;
 import com.bytecodes.ms_accounts.handler.exceptions.CreateAccountLimitExceededException;
 import com.bytecodes.ms_accounts.handler.exceptions.CustomerIsInactiveException;
 import com.bytecodes.ms_accounts.handler.exceptions.NotOwnAccountException;
+import com.bytecodes.ms_accounts.handler.exceptions.UserNotFoundException;
 import com.bytecodes.ms_accounts.mapper.AccountMapper;
 import com.bytecodes.ms_accounts.entity.AccountEntity;
 import com.bytecodes.ms_accounts.model.Account;
@@ -14,6 +15,7 @@ import com.bytecodes.ms_accounts.response.AccountSummary;
 import com.bytecodes.ms_accounts.response.CustomerValidationResponse;
 import com.bytecodes.ms_accounts.util.IbanUtil;
 import com.bytecodes.ms_accounts.util.JwtUtil;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -71,6 +73,15 @@ public class AccountService {
 
     public List<AccountSummary> getMyAccounts(final String token) {
         UUID customerId = UUID.fromString((String) jwtUtil.extractClaim(token, JwtClaim.CUSTOMER_ID));
+        try {
+            CustomerValidationResponse customerValidationResponse = customerClient.validateCustomer(customerId);
+            if (!customerValidationResponse.isExists()) {
+                throw new UserNotFoundException();
+            }
+        } catch (FeignException.NotFound ex) {
+            throw new UserNotFoundException();
+        }
+
         List<AccountEntity> entities = repository.findAllByCustomerId(customerId);
         return entities.stream()
                 .map(this::mapToSummary)
