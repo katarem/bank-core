@@ -1,6 +1,6 @@
 package com.bytecodes.ms_customers.controller;
 
-import com.bytecodes.ms_customers.dto.request.CustomerValidationRequest;
+import com.bytecodes.ms_customers.dto.request.CustomerValidationResponse;
 import com.bytecodes.ms_customers.dto.response.GetProfileResponse;
 import com.bytecodes.ms_customers.handler.CustomerExceptionHandler;
 import com.bytecodes.ms_customers.model.Customer;
@@ -180,7 +180,7 @@ public class CustomerControllerTest {
     void get_validate_customer_exists_and_active() throws Exception {
 
         UUID customerId = UUID.randomUUID();
-                                CustomerValidationRequest validation = new CustomerValidationRequest(customerId, true, true);
+                                CustomerValidationResponse validation = new CustomerValidationResponse(customerId, true, true);
 
         Mockito.when(service.validateCustomer(customerId))
                 .thenReturn(validation);
@@ -200,7 +200,7 @@ public class CustomerControllerTest {
     void get_validate_customer_exists_but_inactive() throws Exception {
 
         UUID customerId = UUID.randomUUID();
-                CustomerValidationRequest validation = new CustomerValidationRequest(customerId, true, false);
+                CustomerValidationResponse validation = new CustomerValidationResponse(customerId, true, false);
 
         Mockito.when(service.validateCustomer(customerId))
                 .thenReturn(validation);

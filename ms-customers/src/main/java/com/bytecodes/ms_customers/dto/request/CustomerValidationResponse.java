@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 
-public class CustomerValidationRequest {
+public class CustomerValidationResponse {
     
     private UUID customerId;
     private boolean exists;

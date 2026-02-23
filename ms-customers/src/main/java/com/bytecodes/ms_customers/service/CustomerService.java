@@ -11,7 +11,7 @@ import com.bytecodes.ms_customers.util.JwtUtil;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import com.bytecodes.ms_customers.dto.request.CustomerValidationRequest;
+import com.bytecodes.ms_customers.dto.request.CustomerValidationResponse;
 import com.bytecodes.ms_customers.entity.CustomerEntity;
 import com.bytecodes.ms_customers.mapper.CustomerMapper;
 import com.bytecodes.ms_customers.repository.CustomerRepository;
@@ -52,12 +52,12 @@ public class CustomerService {
     }
 
 
-    public CustomerValidationRequest validateCustomer(UUID customerId) {
+    public CustomerValidationResponse validateCustomer(UUID customerId) {
         CustomerEntity customer = repository.findById(customerId)
                 .orElseThrow(() -> new UsernameNotFoundException("El usuario no existe"));
 
         boolean isActive = customer.getStatus() == CustomerStatus.ACTIVE;
 
-        return new CustomerValidationRequest(customerId, true, isActive);
+        return new CustomerValidationResponse(customerId, true, isActive);
     }
 }
