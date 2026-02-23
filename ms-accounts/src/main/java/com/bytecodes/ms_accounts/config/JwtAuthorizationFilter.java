@@ -1,16 +1,14 @@
 package com.bytecodes.ms_accounts.config;
 
+import com.bytecodes.ms_accounts.handler.exceptions.UserNotFoundException;
 import com.bytecodes.ms_accounts.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import java.io.IOException;
 
@@ -18,6 +16,7 @@ import java.io.IOException;
 public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
+    private final HandlerExceptionResolver handlerExceptionResolver;
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
@@ -35,10 +34,17 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     }
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        boolean isAccountsListOrCreateRequest =
+            ("GET".equalsIgnoreCase(request.getMethod()) || "POST".equalsIgnoreCase(request.getMethod()))
+                && request.getRequestURI().endsWith("/api/accounts");
 
         String authHeader = request.getHeader("Authorization");
 
         if(authHeader == null || authHeader.isEmpty()) {
+            if (isAccountsListOrCreateRequest) {
+                handlerExceptionResolver.resolveException(request, response, null, new UserNotFoundException());
+                return;
+            }
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
@@ -48,6 +54,10 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         boolean isValidToken = jwtUtil.validateToken(token);
 
         if(!isValidToken){
+            if (isAccountsListOrCreateRequest) {
+                handlerExceptionResolver.resolveException(request, response, null, new UserNotFoundException());
+                return;
+            }
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
