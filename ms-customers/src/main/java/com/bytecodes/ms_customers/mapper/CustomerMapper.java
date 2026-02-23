@@ -5,6 +5,7 @@ import com.bytecodes.ms_customers.dto.response.GetProfileResponse;
 import com.bytecodes.ms_customers.dto.response.RegisterResponse;
 import com.bytecodes.ms_customers.dto.response.UpdateProfileResponse;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
 
 import com.bytecodes.ms_customers.entity.CustomerEntity;
@@ -21,6 +22,7 @@ public interface CustomerMapper {
 
     Customer toModel(RegisterRequest request);
 
+    @Mapping(target = "fullName", expression = "java(customer.getFirstName() + \" \" + customer.getLastName())")
     RegisterResponse toRegisterResponse(Customer customer);
 
     GetProfileResponse toGetProfileResponse(Customer customer);

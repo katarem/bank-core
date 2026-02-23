@@ -1,7 +1,6 @@
 package com.bytecodes.ms_customers.dto.response;
 
 import com.bytecodes.ms_customers.model.CustomerStatus;
-import com.bytecodes.ms_customers.model.UserRole;
 import lombok.Data;
 
 import java.time.Instant;
