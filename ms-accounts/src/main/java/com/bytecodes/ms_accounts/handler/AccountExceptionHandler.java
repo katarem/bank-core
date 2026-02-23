@@ -20,7 +20,6 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -28,7 +27,7 @@ import java.util.stream.Collectors;
  * Clase que manejará las excepciones globales
  */
 @RestControllerAdvice
-public class CustomerExceptionHandler extends ResponseEntityExceptionHandler {
+public class AccountExceptionHandler {
 
     @ExceptionHandler(value = {
             CreateAccountLimitExceededException.class,
@@ -44,16 +43,42 @@ public class CustomerExceptionHandler extends ResponseEntityExceptionHandler {
                         .build());
     }
 
+    @ExceptionHandler(feign.FeignException.class)
+    public ResponseEntity<ErrorDetails> handleFeignException(feign.FeignException ex) {
+
+        var status = ex.status() > 0 ? HttpStatusCode.valueOf(ex.status()) : HttpStatus.BAD_GATEWAY;//En pruebas se identificó que sí está abajo el ms-customer el status devuelto es -1 con el mensaje ConnectionRefused
+        String message = "Ha ocurrido un error interno de comunicación. Intente más tarde. Sí el problema persiste contacte al administrador";
+
+        ErrorDetails error = ErrorDetails.builder()
+                .code("CUSTOMER_SERVICE_ERROR")
+                .message(message)
+                .timestamp(Instant.now())
+                .build();
+
+        return ResponseEntity.status(status).body(error);
+    }
+
     /**
-     * Excepción personalizada para los campos tipo enums
-     * @param ex
-     * @param headers
-     * @param status
-     * @param request
-     * @return
+     * Maneja la excepción {@link HttpMessageNotReadableException} que ocurre
+     * cuando el cuerpo de la petición no puede ser deserializado correctamente.
+     *
+     * <p>
+     * Esta implementación personaliza el mensaje de error cuando la causa
+     * corresponde a un valor inválido para un tipo {@code enum}, indicando
+     * explícitamente el valor recibido y los valores permitidos.
+     * </p>
+     *
+     * @param ex excepción lanzada cuando el mensaje HTTP no puede ser leído
+     *           o convertido al tipo esperado (por ejemplo, JSON mal formado
+     *           o valor inválido para un enum).
+     *
+     *
+     * @return {@link ResponseEntity} con código {@code 400 BAD_REQUEST}
+     *         y un objeto {@link ErrorDetails} que contiene el código de error,
+     *         el mensaje descriptivo y la marca de tiempo.
      */
-    @Override
-    protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorDetails> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
         String message = "Solicitud mal formada";
 
         // Validamos si la causa es por Enum inválido
@@ -78,7 +103,6 @@ public class CustomerExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
-    @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
 
         //De la excepción obtenemos la lista de errores

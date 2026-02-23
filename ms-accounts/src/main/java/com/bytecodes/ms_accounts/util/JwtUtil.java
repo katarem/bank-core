@@ -56,7 +56,6 @@ public class JwtUtil {
     }
 
     public String extractUsername(String token) {
-
         SecretKey key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
 
         var jwt = Jwts.parser()
@@ -66,7 +65,6 @@ public class JwtUtil {
         return jwt.getPayload().getSubject();
     }
 
-    //TODO: Obtener el customerId de token -> //jwt.getPayload().get("customerId", String.class);
     private Claims extractAllClaims(String token) {
         SecretKey key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
 

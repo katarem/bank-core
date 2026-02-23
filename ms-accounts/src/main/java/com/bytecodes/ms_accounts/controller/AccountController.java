@@ -27,7 +27,7 @@ public class AccountController {
     @GetMapping("/{accountId}")
     public ResponseEntity<Account> getAccountById(@PathVariable UUID accountId,
                                                   @RequestHeader(value = "Authorization") String token) {
-        Account account = service.getAccount(accountId, token);
+        Account account = service.getAccount(accountId, token.replace("Bearer ", ""));
         return ResponseEntity.ok(account);
     }
 }
