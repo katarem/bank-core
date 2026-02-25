@@ -35,6 +35,7 @@ public class TransactionEntity {
     @Enumerated(EnumType.STRING)
     private TransactionType type;
     private BigDecimal amount;
+    private BigDecimal balanceBefore;
     private BigDecimal balanceAfter;
     private String concept;
     private String counterpartyAccountNumber;

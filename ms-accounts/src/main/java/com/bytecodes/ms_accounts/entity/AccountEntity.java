@@ -51,18 +51,6 @@ public class AccountEntity {
     private Instant createdAt;
     private Instant updatedAt;
 
-    /*
-     LOCK OPTIMISTA
-     -Sí dos hilos intentan actualizar al mismo tiempo: uno gana y el otro lanza OptimisticLockException
-
-     Es decir Spring/JPA se veria algo como lo siguiente al intentar hacer un UPDATE:
-        UPDATE account
-        SET balance = ?, version = version + 1
-        WHERE id = ? AND version = ?
-     */
-    @Version
-    private Long version;
-
     @PrePersist
     public void prePersist() {
         this.balance = BigDecimal.ZERO;

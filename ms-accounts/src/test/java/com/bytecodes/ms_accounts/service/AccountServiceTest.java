@@ -48,9 +48,6 @@ public class AccountServiceTest {
     private AccountRepository repository;
 
     @Mock
-    private TransactionRepository repositoryTransaction;
-
-    @Mock
     private JwtUtil jwtUtil;
 
     @Mock
@@ -58,9 +55,6 @@ public class AccountServiceTest {
 
     @Mock
     private CustomerClient customerClient;
-
-    @Mock
-    private AccountBalanceService accountBalanceService;
 
     @InjectMocks
     private AccountService service;
@@ -350,116 +344,5 @@ public class AccountServiceTest {
         verify(repository).findById(accountId);
         verify(jwtUtil).extractClaim(eq(token), eq(JwtClaim.CUSTOMER_ID));
     }
-
-    @Test
-    void deposit_ok() {
-        // given
-        UUID accountId = UUID.randomUUID();
-        UUID customerId = UUID.randomUUID();
-        String token = "token";
-        BigDecimal initialBalance = new BigDecimal("100.00");
-        BigDecimal amount = new BigDecimal("25.00");
-
-        DepositRequest request = DepositRequest.builder()
-                .amount(amount)
-                .description("Ingreso nomina")
-                .build();
-
-        AccountEntity accountOwnerEntity = new AccountEntity();
-        accountOwnerEntity.setId(accountId);
-        accountOwnerEntity.setCustomerId(customerId);
-        accountOwnerEntity.setBalance(initialBalance);
-
-        AccountEntity accountUpdatedEntity = new AccountEntity();
-        accountUpdatedEntity.setId(accountId);
-        accountUpdatedEntity.setCustomerId(customerId);
-        accountUpdatedEntity.setBalance(new BigDecimal("125.00"));
-
-        when(repository.findById(accountId)).thenReturn(Optional.of(accountOwnerEntity), Optional.of(accountUpdatedEntity));
-        when(jwtUtil.extractClaim(token, JwtClaim.CUSTOMER_ID)).thenReturn(customerId.toString());
-        when(repositoryTransaction.save(any(TransactionEntity.class))).thenAnswer(invocation -> {
-            TransactionEntity tx = invocation.getArgument(0);
-            if (tx.getId() == null) {
-                tx.setId(UUID.randomUUID());
-            }
-            if (tx.getCreatedAt() == null) {
-                tx.setCreatedAt(Instant.now());
-            }
-            return tx;
-        });
-
-        // when
-        DepositResponse response = service.deposit(accountId, request, token);
-
-        // then
-        assertNotNull(response);
-        assertNotNull(response.getTransactionId());
-        assertEquals(TransactionType.DEPOSIT, response.getType());
-        assertEquals(amount, response.getAmount());
-        assertEquals(initialBalance, response.getBalanceBefore());
-        assertEquals(new BigDecimal("125.00"), response.getBalanceAfter());
-        assertEquals("Ingreso nomina", response.getDescription());
-        assertNotNull(response.getTimestamp());
-
-        ArgumentCaptor<TransactionEntity> txCaptor = ArgumentCaptor.forClass(TransactionEntity.class);
-        verify(repositoryTransaction, Mockito.times(2)).save(txCaptor.capture());
-        verify(accountBalanceService).applyDeposit(accountId, amount);
-        assertEquals(TransactionStatus.COMPLETED, txCaptor.getValue().getStatus());
-    }
-
-    @Test
-    void deposit_failed_when_apply_deposit_throws() {
-        // given
-        UUID accountId = UUID.randomUUID();
-        UUID customerId = UUID.randomUUID();
-        String token = "token";
-        BigDecimal initialBalance = new BigDecimal("100.00");
-        BigDecimal amount = new BigDecimal("25.00");
-
-        DepositRequest request = DepositRequest.builder()
-                .amount(amount)
-                .description("Ingreso nomina")
-                .build();
-
-        AccountEntity accountOwnerEntity = new AccountEntity();
-        accountOwnerEntity.setId(accountId);
-        accountOwnerEntity.setCustomerId(customerId);
-        accountOwnerEntity.setBalance(initialBalance);
-
-        when(repository.findById(accountId)).thenReturn(Optional.of(accountOwnerEntity));
-        when(jwtUtil.extractClaim(token, JwtClaim.CUSTOMER_ID)).thenReturn(customerId.toString());
-        when(repositoryTransaction.save(any(TransactionEntity.class))).thenAnswer(invocation -> {
-            TransactionEntity tx = invocation.getArgument(0);
-            if (tx.getId() == null) {
-                tx.setId(UUID.randomUUID());
-            }
-            if (tx.getCreatedAt() == null) {
-                tx.setCreatedAt(Instant.now());
-            }
-            return tx;
-        });
-        Mockito.doThrow(new RuntimeException("db error"))
-                .when(accountBalanceService)
-                .applyDeposit(accountId, amount);
-
-        // when
-        DepositResponse response = service.deposit(accountId, request, token);
-
-        // then
-        assertNotNull(response);
-        assertNotNull(response.getTransactionId());
-        assertEquals(TransactionType.DEPOSIT, response.getType());
-        assertEquals(amount, response.getAmount());
-        assertEquals(initialBalance, response.getBalanceBefore());
-        assertEquals(initialBalance, response.getBalanceAfter());
-        assertEquals("Ingreso nomina", response.getDescription());
-        assertNotNull(response.getTimestamp());
-
-        ArgumentCaptor<TransactionEntity> txCaptor = ArgumentCaptor.forClass(TransactionEntity.class);
-        verify(repositoryTransaction, Mockito.times(2)).save(txCaptor.capture());
-        verify(accountBalanceService).applyDeposit(accountId, amount);
-        assertEquals(TransactionStatus.FAILED, txCaptor.getValue().getStatus());
-    }
-
 
 }

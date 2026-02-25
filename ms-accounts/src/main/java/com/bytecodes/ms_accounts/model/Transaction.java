@@ -18,6 +18,7 @@ public class Transaction {
     private UUID accountId;
     private TransactionType type;
     private BigDecimal amount;
+    private BigDecimal balanceBefore;
     private BigDecimal balanceAfter;
     private String concept;
     private String counterpartyAccountNumber;

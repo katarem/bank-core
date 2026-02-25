@@ -10,6 +10,7 @@ import com.bytecodes.ms_accounts.handler.exceptions.NotOwnAccountException;
 import com.bytecodes.ms_accounts.model.Account;
 import com.bytecodes.ms_accounts.model.AccountType;
 import com.bytecodes.ms_accounts.model.TransactionType;
+import com.bytecodes.ms_accounts.service.AccountBalanceService;
 import com.bytecodes.ms_accounts.service.AccountService;
 import com.bytecodes.ms_accounts.util.TokenUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -48,6 +49,9 @@ public class AccountControllerTest {
 
     @MockitoBean
     private AccountService service;
+
+    @MockitoBean
+    private AccountBalanceService serviceAccountBalance;
 
     private String userToken;
 
@@ -161,7 +165,7 @@ public class AccountControllerTest {
                 .build();
 
         //when
-        Mockito.when(service.deposit(Mockito.any(UUID.class), Mockito.any(DepositRequest.class), Mockito.any(String.class))).thenReturn(response);
+        Mockito.when(serviceAccountBalance.deposit(Mockito.any(UUID.class), Mockito.any(DepositRequest.class), Mockito.any(String.class))).thenReturn(response);
 
         //then
         mockMvc.perform(

@@ -1,5 +1,6 @@
 package com.bytecodes.ms_accounts.dto.response;
 
+import com.bytecodes.ms_accounts.model.TransactionStatus;
 import com.bytecodes.ms_accounts.model.TransactionType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,5 +22,6 @@ public class DepositResponse {
     private BigDecimal balanceBefore;
     private BigDecimal balanceAfter;
     private String description;
+    private TransactionStatus status;
     private Instant timestamp;
 }
