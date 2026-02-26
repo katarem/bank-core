@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 public class JwtAuthorizationFilter extends OncePerRequestFilter {
@@ -68,7 +69,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
         AuthPrincipal authPrincipal = new AuthPrincipal();
         authPrincipal.setUsername(username);
-        authPrincipal.setCustomerId(customerId);
+        authPrincipal.setCustomerId(UUID.fromString(customerId));
 
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(authPrincipal, null, authorities);
 
