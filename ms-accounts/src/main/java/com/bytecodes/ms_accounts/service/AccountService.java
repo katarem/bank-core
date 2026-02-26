@@ -1,12 +1,12 @@
 package com.bytecodes.ms_accounts.service;
 
 import com.bytecodes.ms_accounts.client.CustomerClient;
+import com.bytecodes.ms_accounts.entity.AccountEntity;
 import com.bytecodes.ms_accounts.handler.exceptions.AccountNotFoundException;
 import com.bytecodes.ms_accounts.handler.exceptions.CreateAccountLimitExceededException;
 import com.bytecodes.ms_accounts.handler.exceptions.CustomerIsInactiveException;
 import com.bytecodes.ms_accounts.handler.exceptions.NotOwnAccountException;
 import com.bytecodes.ms_accounts.mapper.AccountMapper;
-import com.bytecodes.ms_accounts.entity.AccountEntity;
 import com.bytecodes.ms_accounts.model.Account;
 import com.bytecodes.ms_accounts.model.JwtClaim;
 import com.bytecodes.ms_accounts.repository.AccountRepository;
@@ -25,7 +25,7 @@ public class AccountService {
 
     private static final Integer MAX_ACCOUNT_BY_CLIENT = 3;
 
-    private final AccountRepository repository;
+    private final AccountRepository repositoryAccount;
     private final AccountMapper mapper = AccountMapper.INSTANCE;
     private final JwtUtil jwtUtil;
     private final IbanUtil ibanUtil;
@@ -40,7 +40,7 @@ public class AccountService {
         }
 
         //Maximo 3 cuentas por cliente
-        long count = repository.countByCustomerId(customerId);
+        long count = repositoryAccount.countByCustomerId(customerId);
         if (count >= MAX_ACCOUNT_BY_CLIENT) {
             throw new CreateAccountLimitExceededException();
         }
@@ -50,13 +50,13 @@ public class AccountService {
         entity.setAccountNumber(generateIban());
         entity.setDailyWithdrawalLimit(BigDecimal.valueOf(1000));
 
-        AccountEntity created = repository.save(entity);
+        AccountEntity created = repositoryAccount.save(entity);
 
         return mapper.toModel(created);
     }
 
     public Account getAccount(final UUID accountId, final String token) {
-        AccountEntity account = repository.findById(accountId)
+        AccountEntity account = repositoryAccount.findById(accountId)
                 .orElseThrow(() -> new AccountNotFoundException(accountId.toString()));
 
         String customerId = (String) jwtUtil.extractClaim(token, JwtClaim.CUSTOMER_ID);
@@ -75,7 +75,7 @@ public class AccountService {
         String iban;
         do {
             iban = ibanUtil.generateSpanishIban();
-        } while (repository.existsByAccountNumber(iban));
+        } while (repositoryAccount.existsByAccountNumber(iban));
 
         return iban;
     }
