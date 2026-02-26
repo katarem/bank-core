@@ -33,18 +33,11 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
                 || uri.equals("/actuator/prometheus");
     }
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        boolean isAccountsListOrCreateRequest =
-            ("GET".equalsIgnoreCase(request.getMethod()) || "POST".equalsIgnoreCase(request.getMethod()))
-                && request.getRequestURI().endsWith("/api/accounts");
+    protected void doFilterInternal(HttpServletRequest request,HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
         String authHeader = request.getHeader("Authorization");
 
         if(authHeader == null || authHeader.isEmpty()) {
-            if (isAccountsListOrCreateRequest) {
-                handlerExceptionResolver.resolveException(request, response, null, new UserNotFoundException());
-                return;
-            }
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
@@ -54,10 +47,6 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         boolean isValidToken = jwtUtil.validateToken(token);
 
         if(!isValidToken){
-            if (isAccountsListOrCreateRequest) {
-                handlerExceptionResolver.resolveException(request, response, null, new UserNotFoundException());
-                return;
-            }
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }

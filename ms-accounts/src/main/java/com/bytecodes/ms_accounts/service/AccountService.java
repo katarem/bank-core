@@ -84,20 +84,8 @@ public class AccountService {
 
         List<AccountEntity> entities = repository.findAllByCustomerId(customerId);
         return entities.stream()
-                .map(this::mapToSummary)
+            .map(mapper::toSummary)
                 .toList();
-    }
-
-    private AccountSummary mapToSummary(AccountEntity entity) {
-        return AccountSummary.builder()
-                .id(entity.getId())
-                .accountNumber(entity.getAccountNumber())
-                .accountType(entity.getAccountType())
-                .currency(entity.getCurrency())
-                .balance(entity.getBalance())
-                .alias(entity.getAlias())
-                .status(entity.getStatus())
-                .build();
     }
 
     /**
