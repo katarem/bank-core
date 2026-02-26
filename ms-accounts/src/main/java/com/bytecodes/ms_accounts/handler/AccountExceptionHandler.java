@@ -7,22 +7,17 @@ import com.bytecodes.ms_accounts.handler.exceptions.CustomerIsInactiveException;
 import com.bytecodes.ms_accounts.handler.exceptions.NotOwnAccountException;
 import com.bytecodes.ms_accounts.handler.exceptions.UserNotFoundException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.validation.FieldError;
+import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.context.request.WebRequest;
-import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Clase que manejará las excepciones globales
@@ -104,18 +99,21 @@ public class AccountExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
-    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorDetails> validationError(MethodArgumentNotValidException ex) {
+        StringBuilder errors = new StringBuilder();
+        for (ObjectError error : ex.getAllErrors()) {
+            errors.append(error.getDefaultMessage()).append(",");
+        }
 
-        //De la excepción obtenemos la lista de errores
-        Map<String, String> mapErrors = ex.getBindingResult().getFieldErrors().stream()
-                .collect(Collectors.toMap(FieldError::getField,
-                error -> {
-            String errorMessage = error.getDefaultMessage();
-            return errorMessage != null ? errorMessage : "";
-        }));
+        return ResponseEntity
+                .badRequest()
+                .body(ErrorDetails.builder()
+                        .code("INVALID_FIELDS")
+                        .message(errors.toString())
+                        .timestamp(Instant.now())
+                        .build());
 
-        //return super.handleMethodArgumentNotValid(ex, headers, status, request);
-        return ResponseEntity.status(status).body(mapErrors);
     }
 
     @ExceptionHandler(NotOwnAccountException.class)

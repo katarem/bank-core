@@ -1,5 +1,7 @@
 package com.bytecodes.ms_accounts.controller;
 
+import com.bytecodes.ms_accounts.dto.request.DepositRequest;
+import com.bytecodes.ms_accounts.dto.response.DepositResponse;
 import com.bytecodes.ms_accounts.handler.AccountExceptionHandler;
 import com.bytecodes.ms_accounts.handler.exceptions.AccountNotFoundException;
 import com.bytecodes.ms_accounts.handler.exceptions.CreateAccountLimitExceededException;
@@ -10,6 +12,8 @@ import com.bytecodes.ms_accounts.model.Account;
 import com.bytecodes.ms_accounts.model.AccountStatus;
 import com.bytecodes.ms_accounts.model.AccountType;
 import com.bytecodes.ms_accounts.response.AccountSummary;
+import com.bytecodes.ms_accounts.model.TransactionType;
+import com.bytecodes.ms_accounts.service.AccountBalanceService;
 import com.bytecodes.ms_accounts.service.AccountService;
 import com.bytecodes.ms_accounts.util.TokenUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,6 +34,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.time.Instant;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -46,6 +51,9 @@ public class AccountControllerTest {
 
     @MockitoBean
     private AccountService service;
+
+    @MockitoBean
+    private AccountBalanceService serviceAccountBalance;
 
     private String userToken;
 
@@ -143,6 +151,61 @@ public class AccountControllerTest {
                 Arguments.of(new CreateAccountLimitExceededException()),
                 Arguments.of(new CustomerIsInactiveException())
         );
+    }
+
+    @Test
+    void make_deposit_ok() throws Exception {
+        //given
+        DepositResponse response = DepositResponse.builder()
+                .transactionId(UUID.randomUUID())
+                .type(TransactionType.DEPOSIT)
+                .amount(new BigDecimal("100"))
+                .balanceBefore(new BigDecimal("0"))
+                .balanceAfter(new BigDecimal("200"))
+                .description("Deposito en efectivo")
+                .timestamp(Instant.now())
+                .build();
+
+        //when
+        Mockito.when(serviceAccountBalance.deposit(Mockito.any(UUID.class), Mockito.any(DepositRequest.class), Mockito.any(String.class))).thenReturn(response);
+
+        //then
+        mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .post("/api/accounts/{accountId}/deposit", UUID.randomUUID())
+                                .header("Authorization", "Bearer " + userToken)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(new DepositRequest()))
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.type").value("DEPOSIT"))
+                .andExpect(jsonPath("$.description").value(response.getDescription()))
+                .andExpect(jsonPath("$.amount").exists())
+                .andExpect(jsonPath("$.balanceBefore").exists())
+                .andExpect(jsonPath("$.balanceAfter").exists())
+                .andExpect(jsonPath("$.timestamp").exists());
+    }
+
+    @Test
+    void deposit_amount_no_valid() throws Exception {
+        // given
+        DepositRequest request = DepositRequest.builder()
+                .amount(new BigDecimal("0"))
+                .build();
+
+        // when (No entraria aqui dado que se validará antes)
+
+        // then
+        mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .post("/api/accounts/{accountId}/deposit", UUID.randomUUID())
+                                .header("Authorization", "Bearer " + userToken)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_FIELDS"))
+                .andExpect(jsonPath("$.message").exists());
     }
 
     @Test

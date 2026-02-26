@@ -2,6 +2,9 @@ package com.bytecodes.ms_accounts.service;
 
 import com.bytecodes.ms_accounts.client.CustomerClient;
 import com.bytecodes.ms_accounts.entity.AccountEntity;
+import com.bytecodes.ms_accounts.entity.TransactionEntity;
+import com.bytecodes.ms_accounts.dto.request.DepositRequest;
+import com.bytecodes.ms_accounts.dto.response.DepositResponse;
 import com.bytecodes.ms_accounts.handler.exceptions.AccountNotFoundException;
 import com.bytecodes.ms_accounts.handler.exceptions.CreateAccountLimitExceededException;
 import com.bytecodes.ms_accounts.handler.exceptions.CustomerIsInactiveException;
@@ -10,11 +13,15 @@ import com.bytecodes.ms_accounts.model.Account;
 import com.bytecodes.ms_accounts.model.AccountStatus;
 import com.bytecodes.ms_accounts.model.AccountType;
 import com.bytecodes.ms_accounts.model.JwtClaim;
+import com.bytecodes.ms_accounts.model.TransactionStatus;
+import com.bytecodes.ms_accounts.model.TransactionType;
 import com.bytecodes.ms_accounts.repository.AccountRepository;
+import com.bytecodes.ms_accounts.repository.TransactionRepository;
 import com.bytecodes.ms_accounts.response.CustomerValidationResponse;
 import com.bytecodes.ms_accounts.util.IbanUtil;
 import com.bytecodes.ms_accounts.util.JwtUtil;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -337,6 +344,5 @@ public class AccountServiceTest {
         verify(repository).findById(accountId);
         verify(jwtUtil).extractClaim(eq(token), eq(JwtClaim.CUSTOMER_ID));
     }
-
 
 }

@@ -1,6 +1,5 @@
 package com.bytecodes.ms_accounts.config;
 
-import com.bytecodes.ms_accounts.handler.exceptions.UserNotFoundException;
 import com.bytecodes.ms_accounts.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -8,7 +7,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import java.io.IOException;
 
@@ -16,7 +14,6 @@ import java.io.IOException;
 public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
-    private final HandlerExceptionResolver handlerExceptionResolver;
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
@@ -42,11 +39,9 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
             return;
         }
 
-        String token = request.getHeader("Authorization").replace("Bearer ", "");
+        String token = authHeader.replace("Bearer ", "");
 
-        boolean isValidToken = jwtUtil.validateToken(token);
-
-        if(!isValidToken){
+        if (!jwtUtil.validateToken(token)) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
