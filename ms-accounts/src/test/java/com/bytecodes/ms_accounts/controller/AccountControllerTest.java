@@ -12,11 +12,8 @@ import com.bytecodes.ms_accounts.model.Account;
 import com.bytecodes.ms_accounts.model.AccountStatus;
 import com.bytecodes.ms_accounts.model.AccountType;
 import com.bytecodes.ms_accounts.response.AccountSummary;
-<<<<<<< HEAD
 import com.bytecodes.ms_accounts.model.TransactionType;
 import com.bytecodes.ms_accounts.service.AccountBalanceService;
-=======
->>>>>>> 713e688cab228ea9621479719556596cb7f153dc
 import com.bytecodes.ms_accounts.service.AccountService;
 import com.bytecodes.ms_accounts.util.TokenUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,10 +34,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.math.BigDecimal;
 import java.util.List;
-<<<<<<< HEAD
 import java.time.Instant;
-=======
->>>>>>> 713e688cab228ea9621479719556596cb7f153dc
 import java.util.UUID;
 import java.util.stream.Stream;
 

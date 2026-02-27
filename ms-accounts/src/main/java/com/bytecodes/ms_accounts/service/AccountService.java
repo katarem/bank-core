@@ -73,7 +73,6 @@ public class AccountService {
 
     public List<AccountSummary> getMyAccounts(final String token) {
         UUID customerId = UUID.fromString((String) jwtUtil.extractClaim(token, JwtClaim.CUSTOMER_ID));
-<<<<<<< HEAD
 
         List<AccountEntity> entities = repositoryAccount.findAllByCustomerId(customerId);
         return entities.stream()
@@ -81,35 +80,6 @@ public class AccountService {
                 .toList();
     }
 
-=======
-        try {
-            CustomerValidationResponse customerValidationResponse = customerClient.validateCustomer(customerId);
-            if (!customerValidationResponse.isExists()) {
-                throw new UserNotFoundException();
-            }
-        } catch (FeignException.NotFound ex) {
-            throw new UserNotFoundException();
-        }
-
-        List<AccountEntity> entities = repository.findAllByCustomerId(customerId);
-        return entities.stream()
-                .map(this::mapToSummary)
-                .toList();
-    }
-
-    private AccountSummary mapToSummary(AccountEntity entity) {
-        return AccountSummary.builder()
-                .id(entity.getId())
-                .accountNumber(entity.getAccountNumber())
-                .accountType(entity.getAccountType())
-                .currency(entity.getCurrency())
-                .balance(entity.getBalance())
-                .alias(entity.getAlias())
-                .status(entity.getStatus())
-                .build();
-    }
-
->>>>>>> 713e688cab228ea9621479719556596cb7f153dc
     /**
      * Genera un IBAN y valida que no exista una cuenta con dicho IBAN
      * @return IBAN español único
