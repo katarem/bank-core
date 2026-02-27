@@ -1,6 +1,5 @@
 package com.bytecodes.ms_accounts.config;
 
-import com.bytecodes.ms_accounts.handler.exceptions.UserNotFoundException;
 import com.bytecodes.ms_accounts.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -42,7 +41,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
             return;
         }
 
-        String token = request.getHeader("Authorization").replace("Bearer ", "");
+        String token = authHeader.replace("Bearer ", "");
 
         boolean isValidToken = jwtUtil.validateToken(token);
 

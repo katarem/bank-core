@@ -4,7 +4,10 @@ import com.bytecodes.ms_accounts.dto.response.DepositResponse;
 import com.bytecodes.ms_accounts.dto.request.DepositRequest;
 import com.bytecodes.ms_accounts.model.Account;
 import com.bytecodes.ms_accounts.response.AccountSummary;
+<<<<<<< HEAD
 import com.bytecodes.ms_accounts.service.AccountBalanceService;
+=======
+>>>>>>> 713e688cab228ea9621479719556596cb7f153dc
 import com.bytecodes.ms_accounts.service.AccountService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
