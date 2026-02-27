@@ -5,6 +5,8 @@ import com.bytecodes.ms_accounts.dto.response.DepositResponse;
 import com.bytecodes.ms_accounts.entity.AccountEntity;
 import com.bytecodes.ms_accounts.entity.TransactionEntity;
 import com.bytecodes.ms_accounts.handler.exceptions.AccountNotFoundException;
+import com.bytecodes.ms_accounts.handler.exceptions.DailyWithdrawalLimitExceededException;
+import com.bytecodes.ms_accounts.handler.exceptions.InsufficientBalanceException;
 import com.bytecodes.ms_accounts.handler.exceptions.NotOwnAccountException;
 import com.bytecodes.ms_accounts.mapper.TransactionMapper;
 import com.bytecodes.ms_accounts.model.JwtClaim;
@@ -19,6 +21,9 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 /**
@@ -36,6 +41,8 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class AccountBalanceService {
+
+    private static final BigDecimal DEFAULT_DAILY_WITHDRAWAL_LIMIT = BigDecimal.valueOf(1000);
 
     private final TransactionRepository repositoryTransaction;
     private final AccountRepository repositoryAccount;
@@ -87,6 +94,69 @@ public class AccountBalanceService {
 
     }
 
+    public DepositResponse withdraw(final UUID accountId, final DepositRequest request, final String token) {
+        AccountEntity account = repositoryAccount.findById(accountId)
+                .orElseThrow(() -> new AccountNotFoundException(accountId.toString()));
+
+        checkOwnerAccount(token, account);
+
+        BigDecimal amount = request.getAmount();
+        BigDecimal balanceBefore = account.getBalance();
+
+        validateWithdrawalRules(account, amount);
+
+        TransactionEntity transactionEntity = TransactionEntity.builder()
+                .accountId(accountId)
+                .type(TransactionType.WITHDRAWAL)
+                .amount(amount)
+                .balanceBefore(balanceBefore)
+                .balanceAfter(balanceBefore.subtract(amount))
+                .concept(request.getDescription())
+                .status(TransactionStatus.PENDING)
+                .build();
+
+        repositoryTransaction.save(transactionEntity);
+
+        try {
+            AccountEntity accountUpdated = this.applyWithdrawal(accountId, amount);
+            transactionEntity.setStatus(TransactionStatus.COMPLETED);
+            transactionEntity.setBalanceAfter(accountUpdated.getBalance());
+        } catch (Exception e) {
+            transactionEntity.setBalanceAfter(balanceBefore);
+            transactionEntity.setStatus(TransactionStatus.FAILED);
+        }
+
+        repositoryTransaction.save(transactionEntity);
+
+        return mapperTransaction.toDepositResponse(mapperTransaction.toModel(transactionEntity));
+    }
+
+    private void validateWithdrawalRules(AccountEntity account, BigDecimal amount) {
+        if (account.getBalance().compareTo(amount) < 0) {
+            throw new InsufficientBalanceException();
+        }
+
+        BigDecimal dailyLimit = account.getDailyWithdrawalLimit() == null
+                ? DEFAULT_DAILY_WITHDRAWAL_LIMIT
+                : account.getDailyWithdrawalLimit();
+
+        LocalDate currentDateUtc = LocalDate.now(ZoneOffset.UTC);
+        Instant start = currentDateUtc.atStartOfDay().toInstant(ZoneOffset.UTC);
+        Instant end = currentDateUtc.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC);
+
+        BigDecimal dailyUsed = repositoryTransaction.sumAmountByAccountAndTypeAndStatusBetween(
+                account.getId(),
+                TransactionType.WITHDRAWAL,
+                TransactionStatus.COMPLETED,
+                start,
+                end
+        );
+
+        if (dailyUsed.add(amount).compareTo(dailyLimit) > 0) {
+            throw new DailyWithdrawalLimitExceededException();
+        }
+    }
+
     /**
      * Verifica que la cuenta proporcionada pertenezca al cliente autenticado.
      * @param token Token JWT del cual se extrae el identificador del cliente.
@@ -114,6 +184,16 @@ public class AccountBalanceService {
 
         //Lo siguiente no es necesario dado que estamos en una transacción y está managed. Por tanto, automáticamente hibérnate se encagará de hacerlo. Esto es conocido como: "Dirty checking"
         //repositoryAccount.save(accountEntity);
+
+        return accountEntity;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    private AccountEntity applyWithdrawal(UUID accountId, BigDecimal amount) {
+        AccountEntity accountEntity = repositoryAccount.findById(accountId)
+                .orElseThrow(() -> new AccountNotFoundException(accountId.toString()));
+
+        accountEntity.setBalance(accountEntity.getBalance().subtract(amount));
 
         return accountEntity;
     }

@@ -32,6 +32,15 @@ public class AccountController {
                                                  token.replace("Bearer ", "")));
     }
 
+    @PostMapping("/{accountId}/withdraw")
+    public ResponseEntity<DepositResponse> withdraw(@PathVariable UUID accountId,
+                                                    @RequestBody @Valid DepositRequest request,
+                                                    @RequestHeader(value = "Authorization") String token) {
+        return ResponseEntity.ok(serviceAccountBalance.withdraw(accountId,
+                                                    request,
+                                                    token.replace("Bearer ", "")));
+    }
+
 
     @PostMapping
     public ResponseEntity<Account> registerAccount(@RequestBody @Valid Account account,

@@ -209,6 +209,59 @@ public class AccountControllerTest {
     }
 
     @Test
+    void make_withdraw_ok() throws Exception {
+        //given
+        DepositResponse response = DepositResponse.builder()
+                .transactionId(UUID.randomUUID())
+                .type(TransactionType.WITHDRAWAL)
+                .amount(new BigDecimal("200"))
+                .balanceBefore(new BigDecimal("1000"))
+                .balanceAfter(new BigDecimal("800"))
+                .description("Retiro cajero automático")
+                .timestamp(Instant.now())
+                .build();
+
+        //when
+        Mockito.when(serviceAccountBalance.withdraw(Mockito.any(UUID.class), Mockito.any(DepositRequest.class), Mockito.any(String.class))).thenReturn(response);
+
+        //then
+        mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .post("/api/accounts/{accountId}/withdraw", UUID.randomUUID())
+                                .header("Authorization", "Bearer " + userToken)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(new DepositRequest()))
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.type").value("WITHDRAWAL"))
+                .andExpect(jsonPath("$.description").value(response.getDescription()))
+                .andExpect(jsonPath("$.amount").exists())
+                .andExpect(jsonPath("$.balanceBefore").exists())
+                .andExpect(jsonPath("$.balanceAfter").exists())
+                .andExpect(jsonPath("$.timestamp").exists());
+    }
+
+    @Test
+    void withdraw_amount_no_valid() throws Exception {
+        // given
+        DepositRequest request = DepositRequest.builder()
+                .amount(new BigDecimal("0"))
+                .build();
+
+        // then
+        mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .post("/api/accounts/{accountId}/withdraw", UUID.randomUUID())
+                                .header("Authorization", "Bearer " + userToken)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_FIELDS"))
+                .andExpect(jsonPath("$.message").exists());
+    }
+
+    @Test
     void get_account_ok() throws Exception {
         // given
         Account acc = new Account();

@@ -4,6 +4,8 @@ import com.bytecodes.ms_accounts.handler.dto.ErrorDetails;
 import com.bytecodes.ms_accounts.handler.exceptions.AccountNotFoundException;
 import com.bytecodes.ms_accounts.handler.exceptions.CreateAccountLimitExceededException;
 import com.bytecodes.ms_accounts.handler.exceptions.CustomerIsInactiveException;
+import com.bytecodes.ms_accounts.handler.exceptions.DailyWithdrawalLimitExceededException;
+import com.bytecodes.ms_accounts.handler.exceptions.InsufficientBalanceException;
 import com.bytecodes.ms_accounts.handler.exceptions.NotOwnAccountException;
 import com.bytecodes.ms_accounts.handler.exceptions.UserNotFoundException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
@@ -27,7 +29,9 @@ public class AccountExceptionHandler {
 
     @ExceptionHandler(value = {
             CreateAccountLimitExceededException.class,
-            CustomerIsInactiveException.class
+            CustomerIsInactiveException.class,
+            InsufficientBalanceException.class,
+            DailyWithdrawalLimitExceededException.class
     })
     public ResponseEntity<ErrorDetails> handleBusinessExceptions(RuntimeException ex) {
 
