@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -126,12 +127,22 @@ public class AccountExceptionHandler {
         );
     }
 
-    @ExceptionHandler(AccountNotFoundException.class)
-    public ResponseEntity<ErrorDetails> accountNotFound(AccountNotFoundException ex) {
+    @ExceptionHandler({AccountNotFoundException.class, UsernameNotFoundException.class})
+    public ResponseEntity<ErrorDetails> accountNotFound(Exception ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                 ErrorDetails.builder()
                         .code("ACCOUNT_NOT_FOUND")
                         .message(ex.getMessage())
+                        .timestamp(Instant.now())
+                        .build()
+        );
+    }
+
+    @ExceptionHandler({RuntimeException.class})
+    public ResponseEntity<ErrorDetails> serverError() {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                ErrorDetails.builder()
+                        .code("INTERNAL_SERVER_ERROR")
                         .timestamp(Instant.now())
                         .build()
         );

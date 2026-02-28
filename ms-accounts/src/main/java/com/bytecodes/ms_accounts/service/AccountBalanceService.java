@@ -19,6 +19,7 @@ import com.bytecodes.ms_accounts.repository.TransactionRepository;
 import com.bytecodes.ms_accounts.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Example;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -52,7 +53,8 @@ public class AccountBalanceService {
     private final CustomerClient client;
     private final JwtUtil jwtUtil;
 
-    private static final BigDecimal FEE = BigDecimal.ZERO; //TODO: Ask where the fee comes from
+    @Value("bank.fee")
+    private BigDecimal FEE = BigDecimal.ZERO;
 
     public DepositResponse deposit(final UUID accountId, final DepositRequest request, final String token) {
         AccountEntity account = repositoryAccount.findById(accountId)
@@ -111,26 +113,25 @@ public class AccountBalanceService {
         AccountEntity example = new AccountEntity();
         example.setAccountNumber(request.getDestinationAccountNumber());
         AccountEntity destinationAccount = repositoryAccount.findOne(Example.of(example))
-                .orElseThrow();
+                .orElseThrow(() -> new AccountNotFoundException(request.getDestinationAccountNumber()));
 
         // if the destination user is other, we have to check if it's active
         if (!destinationAccount.getCustomerId().equals(authentication.getCustomerId())) {
             var response = client.validateCustomer(authentication.getCustomerId());
             if (!response.isExists() || !response.isActive())
-                throw new UsernameNotFoundException("Not found");
+                throw new UsernameNotFoundException("Destination customer does not exist");
         }
 
         // check if the origin customer is active
         var response = client.validateCustomer(authentication.getCustomerId());
         if (!response.isExists() || !response.isActive())
-            throw new UsernameNotFoundException("Not found");
+            throw new UsernameNotFoundException("Origin customer does not exist");
 
         // check if origin customer is owner of origin account
         checkOwnerAccount(authentication.getCustomerId(), sourceAccount);
 
-
         // process the operation
-        var sourceBalanceAfter = sourceAccount.getBalance().subtract(request.getAmount()).subtract(FEE);
+        var sourceBalanceAfter = sourceAccount.getBalance().subtract(request.getAmount().add(FEE));
         var destinationBalanceAfter = sourceAccount.getBalance().add(request.getAmount());
 
         // retrieve customer info (counter party name)
@@ -144,7 +145,7 @@ public class AccountBalanceService {
                 .balanceAfter(sourceBalanceAfter)
                 .amount(request.getAmount().negate())
                 .counterpartyAccountNumber(sourceAccount.getAccountNumber())
-                .counterpartyName(sourceCustomer.getFullName()) // TODO: Ask is this account alias, or benefitiary name
+                .counterpartyName(sourceCustomer.getFullName())
                 .concept(request.getConcept())
                 .status(TransactionStatus.PENDING)
                 .type(TransactionType.TRANSFER_OUT)
@@ -156,7 +157,7 @@ public class AccountBalanceService {
                 .balanceAfter(destinationBalanceAfter)
                 .amount(request.getAmount())
                 .counterpartyAccountNumber(destinationAccount.getAccountNumber())
-                .counterpartyName(destinationCustomer.getFullName()) // TODO: Ask is this account alias, or benefitiary name
+                .counterpartyName(destinationCustomer.getFullName())
                 .status(TransactionStatus.PENDING)
                 .type(TransactionType.TRANSFER_IN)
                 .build();
@@ -164,6 +165,7 @@ public class AccountBalanceService {
         List<TransactionEntity> transactions = repositoryTransaction.saveAll(List.of(transactionRemoveMoney, transactionAddMoney));
 
         // check if source account has enough balance for the substraction
+
         try {
             if (sourceAccount.getBalance().compareTo(request.getAmount().add(FEE)) < 0) {
                 throw new RuntimeException();
@@ -177,8 +179,8 @@ public class AccountBalanceService {
         repositoryTransaction.saveAll(transactions);
 
         return CreateTransferResponse.builder()
-                .transferId(transactionRemoveMoney.getId()) //TODO: ask which transaction should be here
-                .fee(BigDecimal.ZERO) //TODO: Ask where the fee comes from
+                .transferId(transactionRemoveMoney.getId())
+                .fee(FEE)
                 .beneficiaryName(destinationCustomer.getFullName())
                 .sourceAccount(sourceAccount.getAccountNumber())
                 .destinationAccount(destinationAccount.getAccountNumber())
