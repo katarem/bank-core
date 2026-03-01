@@ -39,7 +39,7 @@ class JwtAuthorizationFilterTest {
 
     @BeforeEach
     void setUp() {
-        filter = new JwtAuthorizationFilter(userDetailsService, jwtUtil);
+        filter = new JwtAuthorizationFilter(jwtUtil);
         SecurityContextHolder.clearContext();
     }
 
