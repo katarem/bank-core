@@ -6,6 +6,8 @@ import com.bytecodes.ms_accounts.handler.AccountExceptionHandler;
 import com.bytecodes.ms_accounts.handler.exceptions.AccountNotFoundException;
 import com.bytecodes.ms_accounts.handler.exceptions.CreateAccountLimitExceededException;
 import com.bytecodes.ms_accounts.handler.exceptions.CustomerIsInactiveException;
+import com.bytecodes.ms_accounts.handler.exceptions.DailyWithdrawalLimitExceededException;
+import com.bytecodes.ms_accounts.handler.exceptions.InsufficientBalanceException;
 import com.bytecodes.ms_accounts.handler.exceptions.NotOwnAccountException;
 import com.bytecodes.ms_accounts.handler.exceptions.UserNotFoundException;
 import com.bytecodes.ms_accounts.model.Account;
@@ -38,6 +40,7 @@ import java.time.Instant;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -213,7 +216,7 @@ public class AccountControllerTest {
         //given
         DepositResponse response = DepositResponse.builder()
                 .transactionId(UUID.randomUUID())
-                .type(TransactionType.WITHDRAWAL)
+                .type(TransactionType.WITHDRAW)
                 .amount(new BigDecimal("200"))
                 .balanceBefore(new BigDecimal("1000"))
                 .balanceAfter(new BigDecimal("800"))
@@ -233,12 +236,18 @@ public class AccountControllerTest {
                                 .content(objectMapper.writeValueAsString(new DepositRequest()))
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.type").value("WITHDRAWAL"))
+                .andExpect(jsonPath("$.type").value("WITHDRAW"))
                 .andExpect(jsonPath("$.description").value(response.getDescription()))
                 .andExpect(jsonPath("$.amount").exists())
                 .andExpect(jsonPath("$.balanceBefore").exists())
                 .andExpect(jsonPath("$.balanceAfter").exists())
                 .andExpect(jsonPath("$.timestamp").exists());
+
+        Mockito.verify(serviceAccountBalance).withdraw(
+                Mockito.any(UUID.class),
+                Mockito.any(DepositRequest.class),
+                eq(userToken)
+        );
     }
 
     @Test
@@ -259,6 +268,112 @@ public class AccountControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("INVALID_FIELDS"))
                 .andExpect(jsonPath("$.message").exists());
+    }
+
+    @Test
+    void withdraw_account_not_found_returns_not_found() throws Exception {
+        UUID accountId = UUID.randomUUID();
+        DepositRequest request = DepositRequest.builder()
+                .amount(new BigDecimal("50"))
+                .description("Retiro")
+                .build();
+
+        Mockito.when(serviceAccountBalance.withdraw(Mockito.eq(accountId), Mockito.any(DepositRequest.class), Mockito.eq(userToken)))
+                .thenThrow(new AccountNotFoundException(accountId.toString()));
+
+        mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .post("/api/accounts/{accountId}/withdraw", accountId)
+                                .header("Authorization", "Bearer " + userToken)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("ACCOUNT_NOT_FOUND"));
+    }
+
+    @Test
+    void withdraw_not_own_account_returns_forbidden() throws Exception {
+        UUID accountId = UUID.randomUUID();
+        DepositRequest request = DepositRequest.builder()
+                .amount(new BigDecimal("50"))
+                .description("Retiro")
+                .build();
+
+        Mockito.when(serviceAccountBalance.withdraw(Mockito.eq(accountId), Mockito.any(DepositRequest.class), Mockito.eq(userToken)))
+                .thenThrow(new NotOwnAccountException());
+
+        mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .post("/api/accounts/{accountId}/withdraw", accountId)
+                                .header("Authorization", "Bearer " + userToken)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("ACCOUNT_ACCESS_NOT_GRANTED"));
+    }
+
+    @Test
+    void withdraw_insufficient_balance_returns_conflict() throws Exception {
+        UUID accountId = UUID.randomUUID();
+        DepositRequest request = DepositRequest.builder()
+                .amount(new BigDecimal("99999"))
+                .description("Retiro")
+                .build();
+
+        Mockito.when(serviceAccountBalance.withdraw(Mockito.eq(accountId), Mockito.any(DepositRequest.class), Mockito.eq(userToken)))
+                .thenThrow(new InsufficientBalanceException());
+
+        mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .post("/api/accounts/{accountId}/withdraw", accountId)
+                                .header("Authorization", "Bearer " + userToken)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("BUSINESS_RULE_VIOLATION"))
+                .andExpect(jsonPath("$.message").exists());
+    }
+
+    @Test
+    void withdraw_daily_limit_exceeded_returns_conflict() throws Exception {
+        UUID accountId = UUID.randomUUID();
+        DepositRequest request = DepositRequest.builder()
+                .amount(new BigDecimal("1200"))
+                .description("Retiro")
+                .build();
+
+        Mockito.when(serviceAccountBalance.withdraw(Mockito.eq(accountId), Mockito.any(DepositRequest.class), Mockito.eq(userToken)))
+                .thenThrow(new DailyWithdrawalLimitExceededException());
+
+        mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .post("/api/accounts/{accountId}/withdraw", accountId)
+                                .header("Authorization", "Bearer " + userToken)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("BUSINESS_RULE_VIOLATION"))
+                .andExpect(jsonPath("$.message").exists());
+    }
+
+    @Test
+    void withdraw_without_token_returns_bad_request() throws Exception {
+        DepositRequest request = DepositRequest.builder()
+                .amount(new BigDecimal("100"))
+                .description("Retiro")
+                .build();
+
+        mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .post("/api/accounts/{accountId}/withdraw", UUID.randomUUID())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isBadRequest());
     }
 
     @Test

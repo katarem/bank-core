@@ -36,7 +36,7 @@ public class AccountController {
     public ResponseEntity<DepositResponse> withdraw(@PathVariable UUID accountId,
                                                     @RequestBody @Valid DepositRequest request,
                                                     @RequestHeader(value = "Authorization") String token) {
-        return ResponseEntity.ok(serviceAccountBalance.withdraw(accountId,
+    return ResponseEntity.ok(serviceAccountBalance.withdraw(accountId,
                                                     request,
                                                     token.replace("Bearer ", "")));
     }

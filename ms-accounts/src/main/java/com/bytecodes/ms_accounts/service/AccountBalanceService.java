@@ -107,7 +107,7 @@ public class AccountBalanceService {
 
         TransactionEntity transactionEntity = TransactionEntity.builder()
                 .accountId(accountId)
-                .type(TransactionType.WITHDRAWAL)
+            .type(TransactionType.WITHDRAW)
                 .amount(amount)
                 .balanceBefore(balanceBefore)
                 .balanceAfter(balanceBefore.subtract(amount))
@@ -146,7 +146,7 @@ public class AccountBalanceService {
 
         BigDecimal dailyUsed = repositoryTransaction.sumAmountByAccountAndTypeAndStatusBetween(
                 account.getId(),
-                TransactionType.WITHDRAWAL,
+            TransactionType.WITHDRAW,
                 TransactionStatus.COMPLETED,
                 start,
                 end

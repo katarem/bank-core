@@ -186,7 +186,7 @@ public class AccountBalanceServiceTest {
 
         when(repositoryTransaction.sumAmountByAccountAndTypeAndStatusBetween(
                 eq(accountId),
-                eq(TransactionType.WITHDRAWAL),
+                eq(TransactionType.WITHDRAW),
                 eq(TransactionStatus.COMPLETED),
                 eq(start),
                 eq(end)
@@ -209,7 +209,7 @@ public class AccountBalanceServiceTest {
 
         // then
         assertNotNull(response);
-        assertEquals(TransactionType.WITHDRAWAL, response.getType());
+        assertEquals(TransactionType.WITHDRAW, response.getType());
         assertEquals(amount, response.getAmount());
         assertEquals(initialBalance, response.getBalanceBefore());
         assertEquals(new BigDecimal("800.00"), response.getBalanceAfter());
@@ -265,7 +265,7 @@ public class AccountBalanceServiceTest {
 
         when(repositoryTransaction.sumAmountByAccountAndTypeAndStatusBetween(
                 eq(accountId),
-                eq(TransactionType.WITHDRAWAL),
+                eq(TransactionType.WITHDRAW),
                 eq(TransactionStatus.COMPLETED),
                 eq(start),
                 eq(end)

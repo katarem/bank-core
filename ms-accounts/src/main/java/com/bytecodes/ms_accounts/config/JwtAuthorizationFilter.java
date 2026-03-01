@@ -36,17 +36,27 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
         String authHeader = request.getHeader("Authorization");
 
-        if(authHeader == null || authHeader.isEmpty()) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        if(authHeader == null || authHeader.isBlank()) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authorization header is missing");
+            return;
+        }
+
+        if (!authHeader.startsWith("Bearer ")) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authorization header must use Bearer token");
             return;
         }
 
         String token = authHeader.replace("Bearer ", "");
 
+        if (token.isBlank()) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Bearer token is empty");
+            return;
+        }
+
         boolean isValidToken = jwtUtil.validateToken(token);
 
         if(!isValidToken){
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid or expired token");
             return;
         }
 
