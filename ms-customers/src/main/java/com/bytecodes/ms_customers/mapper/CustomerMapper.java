@@ -1,6 +1,7 @@
 package com.bytecodes.ms_customers.mapper;
 
 import com.bytecodes.ms_customers.dto.request.RegisterRequest;
+import com.bytecodes.ms_customers.dto.response.GetCustomerResponse;
 import com.bytecodes.ms_customers.dto.response.GetProfileResponse;
 import com.bytecodes.ms_customers.dto.response.RegisterResponse;
 import com.bytecodes.ms_customers.dto.response.UpdateProfileResponse;
@@ -28,5 +29,7 @@ public interface CustomerMapper {
     GetProfileResponse toGetProfileResponse(Customer customer);
 
     UpdateProfileResponse toUpdateProfileResponse(Customer customer);
+
+    GetCustomerResponse toGetCustomerResponse(Customer customer);
 
 }

@@ -3,6 +3,7 @@ package com.bytecodes.ms_customers.service;
 import java.util.UUID;
 
 import com.bytecodes.ms_customers.dto.request.UpdateProfileRequest;
+import com.bytecodes.ms_customers.dto.response.GetCustomerResponse;
 import com.bytecodes.ms_customers.dto.response.GetProfileResponse;
 import com.bytecodes.ms_customers.dto.response.UpdateProfileResponse;
 import com.bytecodes.ms_customers.model.*;
@@ -52,12 +53,22 @@ public class CustomerService {
     }
 
 
-    public CustomerValidationResponse validateCustomer(UUID customerId) {
+    public CustomerValidationResponse validateCustomer(final UUID customerId) {
         CustomerEntity customer = repository.findById(customerId)
                 .orElseThrow(() -> new UsernameNotFoundException("El usuario no existe"));
 
         boolean isActive = customer.getStatus() == CustomerStatus.ACTIVE;
 
         return new CustomerValidationResponse(customerId, true, isActive);
+    }
+
+    public GetCustomerResponse getCustomer(final UUID customerId) {
+
+        CustomerEntity entity = repository.findById(customerId)
+                .orElseThrow(() -> new UsernameNotFoundException("El usuario no existe"));
+
+        Customer customer = mapper.toModel(entity);
+
+        return mapper.toGetCustomerResponse(customer);
     }
 }
