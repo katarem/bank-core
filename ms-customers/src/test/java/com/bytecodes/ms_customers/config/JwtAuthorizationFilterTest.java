@@ -6,9 +6,6 @@ import com.bytecodes.ms_customers.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.*;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -19,7 +16,6 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -50,31 +46,6 @@ class JwtAuthorizationFilterTest {
     @AfterEach
     void tearDown() {
         SecurityContextHolder.clearContext();
-    }
-
-    @ParameterizedTest
-    @MethodSource("excludedEndpointsProvider")
-    void should_not_filter_returns_true(MockHttpServletRequest req) {
-        // when & then
-        assertTrue(filter.shouldNotFilter(req));
-    }
-
-    private static Stream<Arguments> excludedEndpointsProvider() {
-        return Stream.of(
-                Arguments.of(new MockHttpServletRequest("GET", "/actuator/prometheus")),
-                Arguments.of(new MockHttpServletRequest("GET", "/actuator/health")),
-                Arguments.of(new MockHttpServletRequest("GET", "/api/auth/login"))
-        );
-    }
-
-
-    @Test
-    void should_not_filter_returns_false() {
-        // given
-        var req = new MockHttpServletRequest("GET", "/api/customers");
-
-        // when & then
-        assertFalse(filter.shouldNotFilter(req));
     }
 
     @Test

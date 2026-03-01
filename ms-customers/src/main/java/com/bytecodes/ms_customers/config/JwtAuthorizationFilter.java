@@ -22,27 +22,12 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
 
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        String uri = request.getRequestURI();
-        String ctx = request.getContextPath();
-        if (ctx != null && !ctx.isEmpty()) {
-            uri = uri.substring(ctx.length());
-        }
-
-        return uri.startsWith("/api/auth/")
-            || uri.matches("/api/customers/[0-9a-fA-F-]+/validate")
-                || uri.equals("/actuator/health")
-                || uri.startsWith("/swagger-ui/")
-                || uri.startsWith("/v3/api-docs")
-                || uri.equals("/actuator/prometheus");
-    }
-    @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
         String authHeader = request.getHeader("Authorization");
 
         if(authHeader == null || authHeader.isEmpty()) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            filterChain.doFilter(request, response);
             return;
         }
 
@@ -51,14 +36,14 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         boolean isValidToken = jwtUtil.validateToken(token);
 
         if(!isValidToken){
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            filterChain.doFilter(request, response);
             return;
         }
 
         String username = jwtUtil.extractUsername(token);
         UserDetails user = authService.loadUserByUsername(username);
         if(user == null) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            filterChain.doFilter(request, response);
             return;
         }
 

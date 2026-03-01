@@ -25,30 +25,16 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
 
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        String uri = request.getRequestURI();
-        String ctx = request.getContextPath();
-        if (ctx != null && !ctx.isEmpty()) {
-            uri = uri.substring(ctx.length());
-        }
-
-        return uri.startsWith("/api/auth/")
-                || uri.equals("/actuator/health")
-                || uri.startsWith("/swagger-ui/")
-                || uri.startsWith("/v3/api-docs")
-                || uri.equals("/actuator/prometheus");
-    }
-    @Override
     protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) throws ServletException, IOException {
 
         String authHeader = request.getHeader("Authorization");
 
         if(authHeader == null || authHeader.isEmpty()) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            filterChain.doFilter(request, response);
             return;
         }
 
-        String token = request.getHeader("Authorization").replace("Bearer ", "");
+        String token = authHeader.replace("Bearer ", "");
 
         boolean isValidToken = jwtUtil.validateToken(token);
 
