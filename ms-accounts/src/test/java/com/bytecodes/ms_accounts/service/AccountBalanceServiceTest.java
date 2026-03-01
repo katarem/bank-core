@@ -18,6 +18,7 @@ import com.bytecodes.ms_accounts.repository.TransactionRepository;
 import com.bytecodes.ms_accounts.response.CustomerResponse;
 import com.bytecodes.ms_accounts.response.CustomerValidationResponse;
 import com.bytecodes.ms_accounts.util.JwtUtil;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -25,6 +26,7 @@ import org.mockito.Mock;
 import org.springframework.data.domain.Example;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -61,6 +63,12 @@ public class AccountBalanceServiceTest {
 
     @InjectMocks
     private AccountBalanceService service;
+
+    @BeforeEach
+    void setUp() {
+        ReflectionTestUtils.setField(service, "FEE", BigDecimal.ZERO);
+    }
+
 
     @Test
     void deposit_ok() {

@@ -132,7 +132,7 @@ public class AccountBalanceService {
 
         // process the operation
         var sourceBalanceAfter = sourceAccount.getBalance().subtract(request.getAmount().add(FEE));
-        var destinationBalanceAfter = sourceAccount.getBalance().add(request.getAmount());
+        var destinationBalanceAfter = destinationAccount.getBalance().add(request.getAmount());
 
         // retrieve customer info (counter party name)
         var sourceCustomer = client.getCustomer(sourceAccount.getCustomerId());
