@@ -53,8 +53,8 @@ public class AccountBalanceService {
     private final CustomerClient client;
     private final JwtUtil jwtUtil;
 
-    @Value("bank.fee")
-    private BigDecimal FEE = BigDecimal.ZERO;
+    @Value("${bank.fee:0}")
+    private BigDecimal FEE;
 
     public DepositResponse deposit(final UUID accountId, final DepositRequest request, final String token) {
         AccountEntity account = repositoryAccount.findById(accountId)
