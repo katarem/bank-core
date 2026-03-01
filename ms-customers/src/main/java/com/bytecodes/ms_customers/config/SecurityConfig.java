@@ -29,7 +29,6 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http,
                                     JwtUtil jwtUtil,
-                                    UserDetailsServiceImpl userDetailsService,
                                     AuthenticationProvider authenticationProvider) throws Exception {
 
         http
@@ -41,7 +40,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
             )
                 .authenticationProvider(authenticationProvider)
-            .addFilterBefore(new JwtAuthorizationFilter(userDetailsService, jwtUtil), UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(new JwtAuthorizationFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class)
             .exceptionHandling(eh -> eh
                                 .authenticationEntryPoint((req, res, ex) -> res.sendError(401))
                                 .accessDeniedHandler((req, res, ex) -> res.sendError(403))
