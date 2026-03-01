@@ -15,6 +15,7 @@ import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.Instant;
 import java.util.Arrays;
@@ -111,6 +112,20 @@ public class AccountExceptionHandler {
                 .body(ErrorDetails.builder()
                         .code("INVALID_FIELDS")
                         .message(errors.toString())
+                        .timestamp(Instant.now())
+                        .build());
+
+    }
+
+    @ExceptionHandler({MethodArgumentTypeMismatchException.class})
+    public ResponseEntity<ErrorDetails> badTypesException(MethodArgumentTypeMismatchException ex) {
+
+        String message =  ex.getRequiredType() != null ? ex.getPropertyName() + ": " + ex.getRequiredType().getName() : ex.getPropertyName();
+        return ResponseEntity
+                .badRequest()
+                .body(ErrorDetails.builder()
+                        .code("INVALID_FIELDS")
+                        .message(message)
                         .timestamp(Instant.now())
                         .build());
 
