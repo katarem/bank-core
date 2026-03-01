@@ -7,7 +7,6 @@ import com.bytecodes.ms_accounts.handler.exceptions.AccountNotFoundException;
 import com.bytecodes.ms_accounts.handler.exceptions.CreateAccountLimitExceededException;
 import com.bytecodes.ms_accounts.handler.exceptions.CustomerIsInactiveException;
 import com.bytecodes.ms_accounts.handler.exceptions.NotOwnAccountException;
-import com.bytecodes.ms_accounts.handler.exceptions.UserNotFoundException;
 import com.bytecodes.ms_accounts.model.Account;
 import com.bytecodes.ms_accounts.model.AccountStatus;
 import com.bytecodes.ms_accounts.model.AccountType;
@@ -28,6 +27,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -333,16 +333,16 @@ public class AccountControllerTest {
     @Test
     void get_my_accounts_user_not_found() throws Exception {
         Mockito.when(service.getMyAccounts(userToken))
-                .thenThrow(new UserNotFoundException());
+                .thenThrow(new UsernameNotFoundException("El usuario no existe"));
 
         mockMvc.perform(
                         MockMvcRequestBuilders
                                 .get("/api/accounts")
                                 .header("Authorization", "Bearer " + userToken)
                 )
-                .andExpect(status().isUnauthorized())
+                .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("CUSTOMER_NOT_FOUND"))
-                .andExpect(jsonPath("$.message").value("No existe el usuario"));
+                .andExpect(jsonPath("$.message").value("El usuario no existe"));
     }
 
     @Test

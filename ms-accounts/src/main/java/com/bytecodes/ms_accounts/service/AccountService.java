@@ -6,7 +6,6 @@ import com.bytecodes.ms_accounts.handler.exceptions.AccountNotFoundException;
 import com.bytecodes.ms_accounts.handler.exceptions.CreateAccountLimitExceededException;
 import com.bytecodes.ms_accounts.handler.exceptions.CustomerIsInactiveException;
 import com.bytecodes.ms_accounts.handler.exceptions.NotOwnAccountException;
-import com.bytecodes.ms_accounts.handler.exceptions.UserNotFoundException;
 import com.bytecodes.ms_accounts.mapper.AccountMapper;
 import com.bytecodes.ms_accounts.model.Account;
 import com.bytecodes.ms_accounts.model.JwtClaim;
@@ -17,6 +16,7 @@ import com.bytecodes.ms_accounts.util.IbanUtil;
 import com.bytecodes.ms_accounts.util.JwtUtil;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -38,7 +38,13 @@ public class AccountService {
     public Account registerAccount(final Account account, final String token) {
         UUID customerId = UUID.fromString((String) jwtUtil.extractClaim(token, JwtClaim.CUSTOMER_ID));
 
-        CustomerValidationResponse customerValidationResponse = customerClient.validateCustomer(customerId);
+        CustomerValidationResponse customerValidationResponse;
+        try {
+            customerValidationResponse = customerClient.validateCustomer(customerId);
+        } catch (FeignException.NotFound ex) {
+            throw new UsernameNotFoundException("El usuario no existe");
+        }
+
         if (!customerValidationResponse.isActive()) {
             throw new CustomerIsInactiveException();
         }
