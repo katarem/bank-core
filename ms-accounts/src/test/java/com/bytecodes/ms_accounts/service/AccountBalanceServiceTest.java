@@ -15,8 +15,8 @@ import com.bytecodes.ms_accounts.model.TransactionStatus;
 import com.bytecodes.ms_accounts.model.TransactionType;
 import com.bytecodes.ms_accounts.repository.AccountRepository;
 import com.bytecodes.ms_accounts.repository.TransactionRepository;
-import com.bytecodes.ms_accounts.response.CustomerResponse;
-import com.bytecodes.ms_accounts.response.CustomerValidationResponse;
+import com.bytecodes.ms_accounts.dto.response.CustomerResponse;
+import com.bytecodes.ms_accounts.dto.response.CustomerValidationResponse;
 import com.bytecodes.ms_accounts.util.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,7 +31,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 

@@ -10,7 +10,7 @@ import com.bytecodes.ms_accounts.mapper.AccountMapper;
 import com.bytecodes.ms_accounts.model.Account;
 import com.bytecodes.ms_accounts.model.JwtClaim;
 import com.bytecodes.ms_accounts.repository.AccountRepository;
-import com.bytecodes.ms_accounts.response.CustomerValidationResponse;
+import com.bytecodes.ms_accounts.dto.response.CustomerValidationResponse;
 import com.bytecodes.ms_accounts.util.IbanUtil;
 import com.bytecodes.ms_accounts.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
