@@ -1,5 +1,6 @@
 package com.bytecodes.ms_customers.service;
 
+import com.bytecodes.ms_customers.config.TestConfig;
 import com.bytecodes.ms_customers.dto.request.CustomerValidationResponse;
 import com.bytecodes.ms_customers.dto.request.UpdateProfileRequest;
 import com.bytecodes.ms_customers.dto.response.GetCustomerResponse;
@@ -16,22 +17,24 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import java.util.Optional;
 import java.util.UUID;
 
-@SpringJUnitConfig
+@SpringJUnitConfig(classes = {CustomerService.class, TestConfig.class})
 class CustomerServiceTest {
 
-    @Mock
+    @MockitoBean
     private CustomerRepository repository;
 
-    @Mock
+    @Autowired
     private CustomerMapper mapper;
 
-    @InjectMocks
+    @Autowired
     private CustomerService service;
 
     @Test
@@ -47,8 +50,6 @@ class CustomerServiceTest {
         response.setFirstName("user");
 
         Mockito.when(repository.findByEmail(auth.getUsername())).thenReturn(Optional.of(entity));
-        Mockito.when(mapper.toModel(entity)).thenReturn(model);
-        Mockito.when(mapper.toGetProfileResponse(model)).thenReturn(response);
 
         GetProfileResponse safe = service.getMyProfile(auth);
 
@@ -84,8 +85,6 @@ class CustomerServiceTest {
 
         Mockito.when(repository.findByEmail(auth.getUsername())).thenReturn(Optional.of(entity));
         Mockito.when(repository.save(entity)).thenReturn(entity);
-        Mockito.when(mapper.toModel(entity)).thenReturn(mapped);
-        Mockito.when(mapper.toUpdateProfileResponse(mapped)).thenReturn(response);
 
         UpdateProfileResponse safe = service.updateMyProfile(auth, updated);
 
@@ -114,19 +113,7 @@ class CustomerServiceTest {
         entity.setEmail("john.doe@email.com");
         entity.setStatus(CustomerStatus.ACTIVE);
 
-        Customer model = new Customer();
-        model.setId(customerId);
-
-        GetCustomerResponse response = new GetCustomerResponse();
-        response.setId(customerId);
-        response.setDni("12345678A");
-        response.setFullName("John Doe");
-        response.setEmail("john.doe@email.com");
-        response.setStatus("ACTIVE");
-
         Mockito.when(repository.findById(customerId)).thenReturn(Optional.of(entity));
-        Mockito.when(mapper.toModel(entity)).thenReturn(model);
-        Mockito.when(mapper.toGetCustomerResponse(model)).thenReturn(response);
 
         GetCustomerResponse safe = service.getCustomer(customerId);
 

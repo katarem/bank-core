@@ -1,6 +1,7 @@
 package com.bytecodes.ms_accounts.service;
 
 import com.bytecodes.ms_accounts.client.CustomerClient;
+import com.bytecodes.ms_accounts.config.TestConfig;
 import com.bytecodes.ms_accounts.dto.request.RegisterAccountRequest;
 import com.bytecodes.ms_accounts.dto.response.CustomerValidationResponse;
 import com.bytecodes.ms_accounts.dto.response.GetAccountResponse;
@@ -11,15 +12,14 @@ import com.bytecodes.ms_accounts.handler.exceptions.CreateAccountLimitExceededEx
 import com.bytecodes.ms_accounts.handler.exceptions.CustomerIsInactiveException;
 import com.bytecodes.ms_accounts.handler.exceptions.NotOwnAccountException;
 import com.bytecodes.ms_accounts.mapper.AccountMapper;
-import com.bytecodes.ms_accounts.model.Account;
 import com.bytecodes.ms_accounts.model.AccountStatus;
 import com.bytecodes.ms_accounts.model.AccountType;
 import com.bytecodes.ms_accounts.model.AuthPrincipal;
 import com.bytecodes.ms_accounts.repository.AccountRepository;
 import com.bytecodes.ms_accounts.util.IbanUtil;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import java.math.BigDecimal;
@@ -35,33 +35,28 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@SpringJUnitConfig
+@SpringJUnitConfig(classes = {AccountService.class, TestConfig.class})
 class AccountServiceTest {
 
-    @Mock
+    @MockitoBean
     private AccountRepository repository;
 
-    @Mock
+    @MockitoBean
     private IbanUtil ibanUtil;
 
-    @Mock
+    @MockitoBean
     private CustomerClient customerClient;
 
-    @Mock
+    @Autowired
     private AccountMapper mapper;
 
-    @InjectMocks
+    @Autowired
     private AccountService service;
 
     @Test
     void create_account_ok() {
         UUID customerId = UUID.randomUUID();
         RegisterAccountRequest request = registerRequest(AccountType.SAVINGS, "EUR", "Mi cuenta de ahorros");
-        Account mappedRequest = Account.builder()
-                .accountType(request.getAccountType())
-                .currency(request.getCurrency())
-                .alias(request.getAlias())
-                .build();
 
         AccountEntity databaseAccount = AccountEntity.builder()
                 .id(UUID.randomUUID())
@@ -76,42 +71,12 @@ class AccountServiceTest {
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
                 .build();
-        Account savedModel = Account.builder()
-                .id(databaseAccount.getId())
-                .accountNumber(databaseAccount.getAccountNumber())
-                .customerId(databaseAccount.getCustomerId())
-                .accountType(databaseAccount.getAccountType())
-                .currency(databaseAccount.getCurrency())
-                .alias(databaseAccount.getAlias())
-                .balance(databaseAccount.getBalance())
-                .status(databaseAccount.getStatus())
-                .dailyWithdrawalLimit(databaseAccount.getDailyWithdrawalLimit())
-                .createdAt(databaseAccount.getCreatedAt())
-                .updatedAt(databaseAccount.getUpdatedAt())
-                .build();
-        RegisterAccountResponse mappedResponse = RegisterAccountResponse.builder()
-                .id(savedModel.getId())
-                .accountNumber(savedModel.getAccountNumber())
-                .customerId(savedModel.getCustomerId())
-                .accountType(savedModel.getAccountType())
-                .currency(savedModel.getCurrency())
-                .alias(savedModel.getAlias())
-                .balance(savedModel.getBalance())
-                .status(savedModel.getStatus())
-                .dailyWithdrawalLimit(savedModel.getDailyWithdrawalLimit())
-                .createdAt(savedModel.getCreatedAt())
-                .updatedAt(savedModel.getUpdatedAt())
-                .build();
 
         when(customerClient.validateCustomer(customerId)).thenReturn(activeCustomerValidation());
         when(repository.countByCustomerId(customerId)).thenReturn(0L);
         when(ibanUtil.generateSpanishIban()).thenReturn(databaseAccount.getAccountNumber());
         when(repository.existsByAccountNumber(databaseAccount.getAccountNumber())).thenReturn(false);
-        when(mapper.toModel(request)).thenReturn(mappedRequest);
-        when(mapper.toEntity(mappedRequest)).thenReturn(new AccountEntity());
         when(repository.save(any(AccountEntity.class))).thenReturn(databaseAccount);
-        when(mapper.toModel(databaseAccount)).thenReturn(savedModel);
-        when(mapper.toRegisterResponse(savedModel)).thenReturn(mappedResponse);
 
         RegisterAccountResponse accountRegistered = service.registerAccount(request, auth(customerId));
 
@@ -153,11 +118,7 @@ class AccountServiceTest {
     void create_account_with_two_accounts_allowed() {
         UUID customerId = UUID.randomUUID();
         RegisterAccountRequest request = registerRequest(AccountType.CHECKING, "EUR", "Cuenta");
-        Account mappedRequest = Account.builder()
-                .accountType(request.getAccountType())
-                .currency(request.getCurrency())
-                .alias(request.getAlias())
-                .build();
+
         AccountEntity createdEntity = AccountEntity.builder()
                 .id(UUID.randomUUID())
                 .accountNumber("ES5345568154925150625381")
@@ -171,42 +132,12 @@ class AccountServiceTest {
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
                 .build();
-        Account createdModel = Account.builder()
-                .id(createdEntity.getId())
-                .accountNumber(createdEntity.getAccountNumber())
-                .customerId(createdEntity.getCustomerId())
-                .accountType(createdEntity.getAccountType())
-                .currency(createdEntity.getCurrency())
-                .alias(createdEntity.getAlias())
-                .balance(createdEntity.getBalance())
-                .status(createdEntity.getStatus())
-                .dailyWithdrawalLimit(createdEntity.getDailyWithdrawalLimit())
-                .createdAt(createdEntity.getCreatedAt())
-                .updatedAt(createdEntity.getUpdatedAt())
-                .build();
-        RegisterAccountResponse response = RegisterAccountResponse.builder()
-                .id(createdModel.getId())
-                .accountNumber(createdModel.getAccountNumber())
-                .customerId(createdModel.getCustomerId())
-                .accountType(createdModel.getAccountType())
-                .currency(createdModel.getCurrency())
-                .alias(createdModel.getAlias())
-                .balance(createdModel.getBalance())
-                .status(createdModel.getStatus())
-                .dailyWithdrawalLimit(createdModel.getDailyWithdrawalLimit())
-                .createdAt(createdModel.getCreatedAt())
-                .updatedAt(createdModel.getUpdatedAt())
-                .build();
 
         when(customerClient.validateCustomer(customerId)).thenReturn(activeCustomerValidation());
         when(repository.countByCustomerId(customerId)).thenReturn(2L);
         when(ibanUtil.generateSpanishIban()).thenReturn("ES5345568154925150625381");
         when(repository.existsByAccountNumber("ES5345568154925150625381")).thenReturn(false);
-        when(mapper.toModel(request)).thenReturn(mappedRequest);
-        when(mapper.toEntity(mappedRequest)).thenReturn(new AccountEntity());
         when(repository.save(any(AccountEntity.class))).thenReturn(createdEntity);
-        when(mapper.toModel(createdEntity)).thenReturn(createdModel);
-        when(mapper.toRegisterResponse(createdModel)).thenReturn(response);
 
         RegisterAccountResponse accountRegistered =
                 service.registerAccount(request, auth(customerId));
@@ -219,11 +150,7 @@ class AccountServiceTest {
     void create_account_iban_collision_retries_until_unique() {
         UUID customerId = UUID.randomUUID();
         RegisterAccountRequest request = registerRequest(AccountType.CHECKING, "EUR", "Cuenta");
-        Account mappedRequest = Account.builder()
-                .accountType(request.getAccountType())
-                .currency(request.getCurrency())
-                .alias(request.getAlias())
-                .build();
+
         AccountEntity createdEntity = AccountEntity.builder()
                 .id(UUID.randomUUID())
                 .accountNumber("ES1111111111111111111111")
@@ -237,32 +164,6 @@ class AccountServiceTest {
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
                 .build();
-        Account createdModel = Account.builder()
-                .id(createdEntity.getId())
-                .accountNumber(createdEntity.getAccountNumber())
-                .customerId(createdEntity.getCustomerId())
-                .accountType(createdEntity.getAccountType())
-                .currency(createdEntity.getCurrency())
-                .alias(createdEntity.getAlias())
-                .balance(createdEntity.getBalance())
-                .status(createdEntity.getStatus())
-                .dailyWithdrawalLimit(createdEntity.getDailyWithdrawalLimit())
-                .createdAt(createdEntity.getCreatedAt())
-                .updatedAt(createdEntity.getUpdatedAt())
-                .build();
-        RegisterAccountResponse response = RegisterAccountResponse.builder()
-                .id(createdModel.getId())
-                .accountNumber(createdModel.getAccountNumber())
-                .customerId(createdModel.getCustomerId())
-                .accountType(createdModel.getAccountType())
-                .currency(createdModel.getCurrency())
-                .alias(createdModel.getAlias())
-                .balance(createdModel.getBalance())
-                .status(createdModel.getStatus())
-                .dailyWithdrawalLimit(createdModel.getDailyWithdrawalLimit())
-                .createdAt(createdModel.getCreatedAt())
-                .updatedAt(createdModel.getUpdatedAt())
-                .build();
 
         when(customerClient.validateCustomer(customerId)).thenReturn(activeCustomerValidation());
         when(repository.countByCustomerId(customerId)).thenReturn(0L);
@@ -270,11 +171,7 @@ class AccountServiceTest {
                 .thenReturn("ES0000000000000000000000", "ES1111111111111111111111");
         when(repository.existsByAccountNumber("ES0000000000000000000000")).thenReturn(Boolean.TRUE);
         when(repository.existsByAccountNumber("ES1111111111111111111111")).thenReturn(Boolean.FALSE);
-        when(mapper.toModel(request)).thenReturn(mappedRequest);
-        when(mapper.toEntity(mappedRequest)).thenReturn(new AccountEntity());
         when(repository.save(any(AccountEntity.class))).thenReturn(createdEntity);
-        when(mapper.toModel(createdEntity)).thenReturn(createdModel);
-        when(mapper.toRegisterResponse(createdModel)).thenReturn(response);
 
         RegisterAccountResponse accountRegistered =
                 service.registerAccount(request, auth(customerId));
@@ -293,15 +190,8 @@ class AccountServiceTest {
         AccountEntity entity = new AccountEntity();
         entity.setId(accountId);
         entity.setCustomerId(customerId);
-        Account model = Account.builder().id(accountId).customerId(customerId).build();
-        GetAccountResponse mappedResponse = GetAccountResponse.builder()
-                .id(accountId)
-                .customerId(customerId)
-                .build();
 
         when(repository.findById(accountId)).thenReturn(Optional.of(entity));
-        when(mapper.toModel(entity)).thenReturn(model);
-        when(mapper.toGetAccountResponse(model)).thenReturn(mappedResponse);
 
         GetAccountResponse result = service.getAccount(accountId, auth(customerId));
 

@@ -1,5 +1,6 @@
 package com.bytecodes.ms_customers.service;
 
+import com.bytecodes.ms_customers.config.TestConfig;
 import com.bytecodes.ms_customers.dto.request.LoginRequest;
 import com.bytecodes.ms_customers.dto.request.RegisterRequest;
 import com.bytecodes.ms_customers.dto.response.LoginResponse;
@@ -14,37 +15,46 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import java.util.Optional;
 import java.util.UUID;
 
-@SpringJUnitConfig
+@SpringJUnitConfig(
+        classes = {
+                AuthService.class,
+                TestConfig.class
+        }
+)
 class AuthServiceTest {
 
-    @InjectMocks
+    @Autowired
     private AuthService service;
 
-    @Mock
+    @Autowired
+    private CustomerMapper mapper;
+
+    @MockitoBean
     private PasswordEncoder encoder;
 
-    @Mock
+    @MockitoBean
     private AuthenticationManager authenticationManager;
 
-    @Mock
+    @MockitoBean
     private JwtUtil jwtUtil;
 
-    @Mock
+    @MockitoBean
     private CustomerRepository repository;
 
-    @Mock
-    private CustomerMapper mapper;
+
 
     @Test
     void create_customer_ok() {
@@ -74,12 +84,8 @@ class AuthServiceTest {
         response.setDni(savedEntity.getDni());
         response.setEmail(savedEntity.getEmail());
 
-        Mockito.when(mapper.toModel(request)).thenReturn(mappedRequest);
         Mockito.when(encoder.encode("Password123")).thenReturn("encoded-password");
-        Mockito.when(mapper.toEntity(mappedRequest)).thenReturn(new CustomerEntity());
         Mockito.when(repository.save(Mockito.any(CustomerEntity.class))).thenReturn(savedEntity);
-        Mockito.when(mapper.toModel(savedEntity)).thenReturn(savedModel);
-        Mockito.when(mapper.toRegisterResponse(savedModel)).thenReturn(response);
 
         RegisterResponse registered = service.registerCustomer(request);
 
@@ -99,9 +105,7 @@ class AuthServiceTest {
         Customer mappedRequest = new Customer();
         mappedRequest.setPassword(request.getPassword());
 
-        Mockito.when(mapper.toModel(request)).thenReturn(mappedRequest);
         Mockito.when(encoder.encode("Password123")).thenReturn("encoded-password");
-        Mockito.when(mapper.toEntity(mappedRequest)).thenReturn(new CustomerEntity());
         Mockito.when(repository.save(Mockito.any(CustomerEntity.class)))
                 .thenThrow(new DataIntegrityViolationException(
                         "conflict violation",
@@ -134,7 +138,6 @@ class AuthServiceTest {
         Mockito.when(repository.findByEmail(request.getEmail())).thenReturn(Optional.of(entity));
         Mockito.when(authenticationManager.authenticate(Mockito.any()))
                 .thenReturn(new UsernamePasswordAuthenticationToken(entity.getEmail(), entity.getPassword()));
-        Mockito.when(mapper.toModel(entity)).thenReturn(databaseCustomer);
         Mockito.when(jwtUtil.getExpiration()).thenReturn(86400000L);
         Mockito.when(jwtUtil.generateToken(databaseCustomer)).thenReturn("token");
 

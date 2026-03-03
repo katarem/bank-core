@@ -1,6 +1,7 @@
 package com.bytecodes.ms_accounts.service;
 
 import com.bytecodes.ms_accounts.client.CustomerClient;
+import com.bytecodes.ms_accounts.config.TestConfig;
 import com.bytecodes.ms_accounts.dto.request.CreateTransferRequest;
 import com.bytecodes.ms_accounts.dto.request.DepositRequest;
 import com.bytecodes.ms_accounts.dto.response.CreateTransferResponse;
@@ -11,7 +12,6 @@ import com.bytecodes.ms_accounts.handler.exceptions.AccountNotFoundException;
 import com.bytecodes.ms_accounts.handler.exceptions.NotOwnAccountException;
 import com.bytecodes.ms_accounts.mapper.TransactionMapper;
 import com.bytecodes.ms_accounts.model.AuthPrincipal;
-import com.bytecodes.ms_accounts.model.JwtClaim;
 import com.bytecodes.ms_accounts.model.TransactionStatus;
 import com.bytecodes.ms_accounts.model.TransactionType;
 import com.bytecodes.ms_accounts.repository.AccountRepository;
@@ -22,10 +22,10 @@ import com.bytecodes.ms_accounts.util.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -37,7 +37,6 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -46,25 +45,25 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-@SpringJUnitConfig
+@SpringJUnitConfig(classes = {AccountBalanceService.class, TestConfig.class})
 public class AccountBalanceServiceTest {
 
-    @Mock
+    @MockitoBean
     private AccountRepository repositoryAccount;
 
-    @Mock
+    @MockitoBean
     private JwtUtil jwtUtil;
 
-    @Mock
+    @MockitoBean
     private TransactionRepository repositoryTransaction;
 
-    @Mock
+    @MockitoBean
     private CustomerClient client;
 
-    @Mock
+    @Autowired
     private TransactionMapper mapper;
 
-    @InjectMocks
+    @Autowired
     private AccountBalanceService service;
 
     @BeforeEach
@@ -107,7 +106,6 @@ public class AccountBalanceServiceTest {
                     }
                     return tx;
                 });
-        mockDepositMapper();
 
         // when
         DepositResponse response = service.deposit(accountId, request, authentication);
@@ -160,7 +158,6 @@ public class AccountBalanceServiceTest {
                     }
                     return tx;
                 });
-        mockDepositMapper();
 
         // when
         DepositResponse response = service.deposit(accountId, request, authentication);
@@ -425,36 +422,6 @@ public class AccountBalanceServiceTest {
                 .build();
     }
 
-    private void mockDepositMapper() {
-        when(mapper.toModel(any(TransactionEntity.class))).thenAnswer(invocation -> {
-            TransactionEntity tx = invocation.getArgument(0);
-            return com.bytecodes.ms_accounts.model.Transaction.builder()
-                    .id(tx.getId())
-                    .accountId(tx.getAccountId())
-                    .type(tx.getType())
-                    .amount(tx.getAmount())
-                    .balanceBefore(tx.getBalanceBefore())
-                    .balanceAfter(tx.getBalanceAfter())
-                    .concept(tx.getConcept())
-                    .status(tx.getStatus())
-                    .createdAt(tx.getCreatedAt())
-                    .build();
-        });
-
-        when(mapper.toDepositResponse(any(com.bytecodes.ms_accounts.model.Transaction.class))).thenAnswer(invocation -> {
-            com.bytecodes.ms_accounts.model.Transaction tx = invocation.getArgument(0);
-            return DepositResponse.builder()
-                    .transactionId(tx.getId())
-                    .type(tx.getType())
-                    .amount(tx.getAmount())
-                    .balanceBefore(tx.getBalanceBefore())
-                    .balanceAfter(tx.getBalanceAfter())
-                    .description(tx.getConcept())
-                    .status(tx.getStatus())
-                    .timestamp(tx.getCreatedAt())
-                    .build();
-        });
-    }
 
     private AuthPrincipal auth(UUID customerId) {
         AuthPrincipal authentication = new AuthPrincipal();
