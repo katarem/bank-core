@@ -40,6 +40,7 @@ public class CustomerController {
     }
 
     @PreAuthorize("hasAnyRole('ADMIN','SERVICE')")
+    @GetMapping("/{customerId}")
     public ResponseEntity<GetCustomerResponse> getCustomer(@PathVariable UUID customerId) {
         return ResponseEntity.ok(customerService.getCustomer(customerId));
     }

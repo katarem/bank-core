@@ -30,6 +30,7 @@ public interface CustomerMapper {
 
     UpdateProfileResponse toUpdateProfileResponse(Customer customer);
 
+    @Mapping(target = "fullName", expression = "java(customer.getFirstName() + \" \" + customer.getLastName())")
     GetCustomerResponse toGetCustomerResponse(Customer customer);
 
 }

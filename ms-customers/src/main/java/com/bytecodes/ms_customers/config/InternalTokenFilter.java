@@ -13,13 +13,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 @Component
 public class InternalTokenFilter extends OncePerRequestFilter {
 
     @Value("${allowed.services}")
-    private List<String> availableServices;
+    private String[] availableServices;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -31,7 +32,7 @@ public class InternalTokenFilter extends OncePerRequestFilter {
             return;
         }
 
-        if(!availableServices.contains(internalServiceToken)) {
+        if(!Arrays.asList(availableServices).contains(internalServiceToken)) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -39,9 +40,9 @@ public class InternalTokenFilter extends OncePerRequestFilter {
         String role = "ROLE_SERVICE";
         List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
 
-        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(null, null, authorities);
+        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(internalServiceToken, null, authorities);
 
         SecurityContextHolder.getContext().setAuthentication(token);
-
+        filterChain.doFilter(request, response);
     }
 }
