@@ -11,8 +11,6 @@ import org.mapstruct.factory.Mappers;
 @Mapper
 public interface TransactionMapper {
 
-    TransactionMapper INSTANCE = Mappers.getMapper(TransactionMapper.class);
-
     Transaction toModel(TransactionEntity entity);
 
     @Mapping(source = "description", target = "concept")

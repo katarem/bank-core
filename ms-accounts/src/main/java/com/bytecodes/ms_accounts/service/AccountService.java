@@ -30,7 +30,7 @@ public class AccountService {
     private static final Integer MAX_ACCOUNT_BY_CLIENT = 3;
 
     private final AccountRepository repositoryAccount;
-    private final AccountMapper mapper = AccountMapper.INSTANCE;
+    private final AccountMapper mapper;
     private final IbanUtil ibanUtil;
     private final CustomerClient customerClient;
 

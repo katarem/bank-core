@@ -9,6 +9,7 @@ import com.bytecodes.ms_accounts.entity.AccountEntity;
 import com.bytecodes.ms_accounts.entity.TransactionEntity;
 import com.bytecodes.ms_accounts.handler.exceptions.AccountNotFoundException;
 import com.bytecodes.ms_accounts.handler.exceptions.NotOwnAccountException;
+import com.bytecodes.ms_accounts.mapper.TransactionMapper;
 import com.bytecodes.ms_accounts.model.AuthPrincipal;
 import com.bytecodes.ms_accounts.model.JwtClaim;
 import com.bytecodes.ms_accounts.model.TransactionStatus;
@@ -60,6 +61,9 @@ public class AccountBalanceServiceTest {
     @Mock
     private CustomerClient client;
 
+    @Mock
+    private TransactionMapper mapper;
+
     @InjectMocks
     private AccountBalanceService service;
 
@@ -74,7 +78,7 @@ public class AccountBalanceServiceTest {
         // given
         UUID accountId = UUID.randomUUID();
         UUID customerId = UUID.randomUUID();
-        String token = "token";
+        AuthPrincipal authentication = auth(customerId);
 
         BigDecimal initialBalance = new BigDecimal("100.00");
         BigDecimal amount = new BigDecimal("25.00");
@@ -92,9 +96,6 @@ public class AccountBalanceServiceTest {
         when(repositoryAccount.findById(accountId))
                 .thenReturn(Optional.of(accountEntity));
 
-        when(jwtUtil.extractClaim(token, JwtClaim.CUSTOMER_ID))
-                .thenReturn(customerId.toString());
-
         when(repositoryTransaction.save(any(TransactionEntity.class)))
                 .thenAnswer(invocation -> {
                     TransactionEntity tx = invocation.getArgument(0);
@@ -106,9 +107,10 @@ public class AccountBalanceServiceTest {
                     }
                     return tx;
                 });
+        mockDepositMapper();
 
         // when
-        DepositResponse response = service.deposit(accountId, request, token);
+        DepositResponse response = service.deposit(accountId, request, authentication);
 
         // then
         assertNotNull(response);
@@ -129,7 +131,7 @@ public class AccountBalanceServiceTest {
         // given
         UUID accountId = UUID.randomUUID();
         UUID customerId = UUID.randomUUID();
-        String token = "token";
+        AuthPrincipal authentication = auth(customerId);
         BigDecimal initialBalance = new BigDecimal("100.00");
         BigDecimal amount = new BigDecimal("25.00");
 
@@ -147,9 +149,6 @@ public class AccountBalanceServiceTest {
                 .thenReturn(Optional.of(accountEntity))
                 .thenThrow(new RuntimeException("db error"));
 
-        when(jwtUtil.extractClaim(token, JwtClaim.CUSTOMER_ID))
-                .thenReturn(customerId.toString());
-
         when(repositoryTransaction.save(any(TransactionEntity.class)))
                 .thenAnswer(invocation -> {
                     TransactionEntity tx = invocation.getArgument(0);
@@ -161,9 +160,10 @@ public class AccountBalanceServiceTest {
                     }
                     return tx;
                 });
+        mockDepositMapper();
 
         // when
-        DepositResponse response = service.deposit(accountId, request, token);
+        DepositResponse response = service.deposit(accountId, request, authentication);
 
         // then
         assertNotNull(response);
@@ -423,6 +423,37 @@ public class AccountBalanceServiceTest {
                 .fullName(fullName)
                 .status("ACTIVE")
                 .build();
+    }
+
+    private void mockDepositMapper() {
+        when(mapper.toModel(any(TransactionEntity.class))).thenAnswer(invocation -> {
+            TransactionEntity tx = invocation.getArgument(0);
+            return com.bytecodes.ms_accounts.model.Transaction.builder()
+                    .id(tx.getId())
+                    .accountId(tx.getAccountId())
+                    .type(tx.getType())
+                    .amount(tx.getAmount())
+                    .balanceBefore(tx.getBalanceBefore())
+                    .balanceAfter(tx.getBalanceAfter())
+                    .concept(tx.getConcept())
+                    .status(tx.getStatus())
+                    .createdAt(tx.getCreatedAt())
+                    .build();
+        });
+
+        when(mapper.toDepositResponse(any(com.bytecodes.ms_accounts.model.Transaction.class))).thenAnswer(invocation -> {
+            com.bytecodes.ms_accounts.model.Transaction tx = invocation.getArgument(0);
+            return DepositResponse.builder()
+                    .transactionId(tx.getId())
+                    .type(tx.getType())
+                    .amount(tx.getAmount())
+                    .balanceBefore(tx.getBalanceBefore())
+                    .balanceAfter(tx.getBalanceAfter())
+                    .description(tx.getConcept())
+                    .status(tx.getStatus())
+                    .timestamp(tx.getCreatedAt())
+                    .build();
+        });
     }
 
     private AuthPrincipal auth(UUID customerId) {

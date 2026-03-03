@@ -7,7 +7,7 @@ import com.bytecodes.ms_accounts.dto.response.CreateTransferResponse;
 import com.bytecodes.ms_accounts.dto.response.DepositResponse;
 import com.bytecodes.ms_accounts.entity.AccountEntity;
 import com.bytecodes.ms_accounts.entity.TransactionEntity;
-import com.bytecodes.ms_accounts.exception.NotEnoughBalanceException;
+import com.bytecodes.ms_accounts.handler.exceptions.NotEnoughBalanceException;
 import com.bytecodes.ms_accounts.handler.exceptions.AccountNotFoundException;
 import com.bytecodes.ms_accounts.handler.exceptions.NotOwnAccountException;
 import com.bytecodes.ms_accounts.mapper.TransactionMapper;
@@ -48,20 +48,18 @@ public class AccountBalanceService {
 
     private final TransactionRepository repositoryTransaction;
     private final AccountRepository repositoryAccount;
-    private final TransactionMapper mapperTransaction = TransactionMapper.INSTANCE;
+    private final TransactionMapper mapperTransaction;
     private final CustomerClient client;
     private final JwtUtil jwtUtil;
 
     @Value("${bank.fee:0}")
     private BigDecimal FEE;
 
-    public DepositResponse deposit(final UUID accountId, final DepositRequest request, final String token) {
+    public DepositResponse deposit(final UUID accountId, final DepositRequest request, final AuthPrincipal auth) {
         AccountEntity account = repositoryAccount.findById(accountId)
                 .orElseThrow(() -> new AccountNotFoundException(accountId.toString()));
 
-        //TODO: Refactorizar para usar authentication
-        String customerId = (String) jwtUtil.extractClaim(token, JwtClaim.CUSTOMER_ID);
-        checkOwnerAccount(UUID.fromString(customerId), account);
+        checkOwnerAccount(auth.getCustomerId(), account);
 
         BigDecimal amount = request.getAmount();
         BigDecimal balanceBefore = account.getBalance();

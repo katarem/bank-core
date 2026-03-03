@@ -1,4 +1,4 @@
-package com.bytecodes.ms_accounts.exception;
+package com.bytecodes.ms_accounts.handler.exceptions;
 
 public class NotEnoughBalanceException extends RuntimeException {
     public NotEnoughBalanceException(){

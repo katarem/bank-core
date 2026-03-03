@@ -5,7 +5,6 @@ import com.bytecodes.ms_accounts.dto.response.DepositResponse;
 import com.bytecodes.ms_accounts.dto.request.DepositRequest;
 import com.bytecodes.ms_accounts.dto.response.GetAccountResponse;
 import com.bytecodes.ms_accounts.dto.response.RegisterAccountResponse;
-import com.bytecodes.ms_accounts.model.Account;
 import com.bytecodes.ms_accounts.model.AuthPrincipal;
 import com.bytecodes.ms_accounts.service.AccountBalanceService;
 import com.bytecodes.ms_accounts.service.AccountService;
@@ -29,10 +28,10 @@ public class AccountController {
     @PostMapping("/{accountId}/deposit")
     public ResponseEntity<DepositResponse> deposit(@PathVariable UUID accountId,
                                                    @RequestBody @Valid DepositRequest request,
-                                                   @RequestHeader(value = "Authorization") String token) {
+                                                   @AuthenticationPrincipal AuthPrincipal auth) {
         return ResponseEntity.ok(serviceAccountBalance.deposit(accountId,
                                                  request,
-                                                 token.replace("Bearer ", "")));
+                                                 auth));
     }
 
 

@@ -8,10 +8,8 @@ import com.bytecodes.ms_accounts.model.Account;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
-@Mapper
+@Mapper(componentModel = "spring")
 public interface AccountMapper {
-
-    AccountMapper INSTANCE = Mappers.getMapper(AccountMapper.class);
 
     Account toModel(AccountEntity entity);
 
