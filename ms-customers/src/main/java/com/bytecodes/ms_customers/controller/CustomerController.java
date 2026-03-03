@@ -1,6 +1,7 @@
 package com.bytecodes.ms_customers.controller;
 
 import com.bytecodes.ms_customers.dto.request.CustomerValidationResponse;
+import com.bytecodes.ms_customers.dto.response.GetCustomerResponse;
 import com.bytecodes.ms_customers.dto.response.GetProfileResponse;
 import com.bytecodes.ms_customers.dto.response.UpdateProfileResponse;
 import com.bytecodes.ms_customers.dto.request.UpdateProfileRequest;
@@ -10,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -35,5 +37,11 @@ public class CustomerController {
     @GetMapping("/{customerId}/validate")
     public ResponseEntity<CustomerValidationResponse> validateCustomer(@PathVariable UUID customerId) {
         return ResponseEntity.ok(customerService.validateCustomer(customerId));
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN','SERVICE')")
+    @GetMapping("/{customerId}")
+    public ResponseEntity<GetCustomerResponse> getCustomer(@PathVariable UUID customerId) {
+        return ResponseEntity.ok(customerService.getCustomer(customerId));
     }
 }

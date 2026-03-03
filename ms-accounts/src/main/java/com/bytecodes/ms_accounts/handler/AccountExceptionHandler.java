@@ -10,10 +10,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.Instant;
 import java.util.Arrays;
@@ -115,6 +117,20 @@ public class AccountExceptionHandler {
 
     }
 
+    @ExceptionHandler({MethodArgumentTypeMismatchException.class})
+    public ResponseEntity<ErrorDetails> badTypesException(MethodArgumentTypeMismatchException ex) {
+
+        String message =  ex.getRequiredType() != null ? ex.getPropertyName() + ": " + ex.getRequiredType().getName() : ex.getPropertyName();
+        return ResponseEntity
+                .badRequest()
+                .body(ErrorDetails.builder()
+                        .code("INVALID_FIELDS")
+                        .message(message)
+                        .timestamp(Instant.now())
+                        .build());
+
+    }
+
     @ExceptionHandler(NotOwnAccountException.class)
     public ResponseEntity<ErrorDetails> notOwnAccount(NotOwnAccountException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
@@ -126,12 +142,22 @@ public class AccountExceptionHandler {
         );
     }
 
-    @ExceptionHandler(AccountNotFoundException.class)
-    public ResponseEntity<ErrorDetails> accountNotFound(AccountNotFoundException ex) {
+    @ExceptionHandler({AccountNotFoundException.class, UsernameNotFoundException.class})
+    public ResponseEntity<ErrorDetails> accountNotFound(Exception ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                 ErrorDetails.builder()
                         .code("ACCOUNT_NOT_FOUND")
                         .message(ex.getMessage())
+                        .timestamp(Instant.now())
+                        .build()
+        );
+    }
+
+    @ExceptionHandler({RuntimeException.class})
+    public ResponseEntity<ErrorDetails> serverError() {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                ErrorDetails.builder()
+                        .code("INTERNAL_SERVER_ERROR")
                         .timestamp(Instant.now())
                         .build()
         );
