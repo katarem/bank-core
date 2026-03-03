@@ -1,14 +1,17 @@
 package com.bytecodes.ms_accounts.controller;
 
 import com.bytecodes.ms_accounts.dto.request.DepositRequest;
+import com.bytecodes.ms_accounts.dto.request.RegisterAccountRequest;
 import com.bytecodes.ms_accounts.dto.response.DepositResponse;
+import com.bytecodes.ms_accounts.dto.response.GetAccountResponse;
+import com.bytecodes.ms_accounts.dto.response.RegisterAccountResponse;
 import com.bytecodes.ms_accounts.handler.AccountExceptionHandler;
 import com.bytecodes.ms_accounts.handler.exceptions.AccountNotFoundException;
 import com.bytecodes.ms_accounts.handler.exceptions.CreateAccountLimitExceededException;
 import com.bytecodes.ms_accounts.handler.exceptions.CustomerIsInactiveException;
 import com.bytecodes.ms_accounts.handler.exceptions.NotOwnAccountException;
-import com.bytecodes.ms_accounts.model.Account;
 import com.bytecodes.ms_accounts.model.AccountType;
+import com.bytecodes.ms_accounts.model.AuthPrincipal;
 import com.bytecodes.ms_accounts.model.TransactionType;
 import com.bytecodes.ms_accounts.service.AccountBalanceService;
 import com.bytecodes.ms_accounts.service.AccountService;
@@ -63,14 +66,14 @@ public class AccountControllerTest {
     @Test
     void register_account_returns_created() throws Exception {
         //given
-        Account account = Account.builder()
+        RegisterAccountResponse account = RegisterAccountResponse.builder()
                 .accountType(AccountType.CHECKING)
                 .currency("EUR")
                 .alias("Mi cuenta corriente")
                 .build();
 
         //when
-        Mockito.when(service.registerAccount(Mockito.any(), Mockito.isNotNull()))
+        Mockito.when(service.registerAccount(Mockito.any(), Mockito.any()))
                 .thenReturn(account);
 
         //then
@@ -118,7 +121,7 @@ public class AccountControllerTest {
     @MethodSource("businessRulesConflictProvider")
     void register_account_violated_business_rules_returns_conflict(RuntimeException exception) throws Exception {
         //given
-        Account account = Account.builder()
+        RegisterAccountResponse account = RegisterAccountResponse.builder()
                 .accountType(AccountType.SAVINGS)
                 .currency("USD")
                 .alias("Mi cuenta")
@@ -163,7 +166,7 @@ public class AccountControllerTest {
                 .build();
 
         //when
-        Mockito.when(serviceAccountBalance.deposit(Mockito.any(UUID.class), Mockito.any(DepositRequest.class), Mockito.any(String.class))).thenReturn(response);
+        Mockito.when(serviceAccountBalance.deposit(Mockito.any(UUID.class), Mockito.any(DepositRequest.class), Mockito.nullable(AuthPrincipal.class))).thenReturn(response);
 
         //then
         mockMvc.perform(
@@ -207,10 +210,12 @@ public class AccountControllerTest {
     @Test
     void get_account_ok() throws Exception {
         // given
-        Account acc = new Account();
+        GetAccountResponse acc = new GetAccountResponse();
         acc.setId(UUID.randomUUID());
+        acc.setCustomerId(UUID.randomUUID());
+
         // when
-        Mockito.when(service.getAccount(acc.getId(), "Bearer " + userToken))
+        Mockito.when(service.getAccount(Mockito.eq(acc.getId()), Mockito.any()))
                 .thenReturn(acc);
         // then
         mockMvc.perform(
@@ -226,7 +231,7 @@ public class AccountControllerTest {
         UUID accountId = UUID.randomUUID();
 
         // when
-        Mockito.when(service.getAccount(accountId, userToken))//En el llamado a la capa service se debe realizar sin el "Bearer "
+        Mockito.when(service.getAccount(Mockito.eq(accountId), Mockito.any()))
                 .thenThrow(new AccountNotFoundException(accountId.toString()));
 
         // then
@@ -244,7 +249,7 @@ public class AccountControllerTest {
         UUID accountId = UUID.randomUUID();
 
         // when
-        Mockito.when(service.getAccount(accountId, userToken))//El llamado a la capa service lo realiza sin el "Bearer ", dado que el controller lo quita
+        Mockito.when(service.getAccount(Mockito.eq(accountId), Mockito.any()))
                 .thenThrow(new NotOwnAccountException());
 
         // then

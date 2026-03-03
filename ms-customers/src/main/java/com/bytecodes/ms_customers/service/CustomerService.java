@@ -24,23 +24,18 @@ import lombok.RequiredArgsConstructor;
 public class CustomerService {
 
     private final CustomerRepository repository;
-    private final CustomerMapper mapper = CustomerMapper.INSTANCE;
-    private final JwtUtil jwtUtil;
+    private final CustomerMapper mapper;
 
-    public GetProfileResponse getMyProfile(final String token) {
-        String username = jwtUtil.extractUsername(token);
-
-        Customer model = mapper.toModel(repository.findByEmail(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuario " + username + " no encontrado")));
+    public GetProfileResponse getMyProfile(final AuthPrincipal auth) {
+        Customer model = mapper.toModel(repository.findByEmail(auth.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario " + auth.getUsername() + " no encontrado")));
 
         return mapper.toGetProfileResponse(model);
     }
 
-    public UpdateProfileResponse updateMyProfile(final String token, final UpdateProfileRequest updated) {
-        String username = jwtUtil.extractUsername(token);
-
-        CustomerEntity entity = repository.findByEmail(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuario " + username + " no encontrado"));
+    public UpdateProfileResponse updateMyProfile(final AuthPrincipal auth, final UpdateProfileRequest updated) {
+        CustomerEntity entity = repository.findByEmail(auth.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario " + auth.getUsername() + " no encontrado"));
 
         entity.setFirstName(updated.getFirstName());
         entity.setLastName(updated.getLastName());

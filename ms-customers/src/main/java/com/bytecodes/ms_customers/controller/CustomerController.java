@@ -5,6 +5,7 @@ import com.bytecodes.ms_customers.dto.response.GetCustomerResponse;
 import com.bytecodes.ms_customers.dto.response.GetProfileResponse;
 import com.bytecodes.ms_customers.dto.response.UpdateProfileResponse;
 import com.bytecodes.ms_customers.dto.request.UpdateProfileRequest;
+import com.bytecodes.ms_customers.model.AuthPrincipal;
 import com.bytecodes.ms_customers.service.CustomerService;
 import lombok.RequiredArgsConstructor;
 
@@ -12,6 +13,7 @@ import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -22,14 +24,14 @@ public class CustomerController {
     private final CustomerService customerService;
 
     @GetMapping("/me")
-    public ResponseEntity<GetProfileResponse> getMyProfile(@RequestHeader(value = "Authorization") String token) {
-        return ResponseEntity.ok(customerService.getMyProfile(token.replace("Bearer ", "")));
+    public ResponseEntity<GetProfileResponse> getMyProfile(@AuthenticationPrincipal AuthPrincipal auth) {
+        return ResponseEntity.ok(customerService.getMyProfile(auth));
     }
 
     @PutMapping("/me")
-    public ResponseEntity<UpdateProfileResponse> updateMyProfile(@RequestHeader("Authorization") String token,
+    public ResponseEntity<UpdateProfileResponse> updateMyProfile(@AuthenticationPrincipal AuthPrincipal auth,
                                                                  @RequestBody UpdateProfileRequest updated) {
-        return ResponseEntity.ok(customerService.updateMyProfile(token.replace("Bearer ", ""), updated));
+        return ResponseEntity.ok(customerService.updateMyProfile(auth, updated));
     }
 
 
