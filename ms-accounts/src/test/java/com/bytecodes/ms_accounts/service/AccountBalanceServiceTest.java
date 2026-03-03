@@ -203,7 +203,7 @@ public class AccountBalanceServiceTest {
         // then
         assertNotNull(response);
         assertNotNull(response.getTransferId());
-        assertNull(response.getStatus());
+        assertEquals("COMPLETED", response.getStatus().name());
         assertEquals("Alice", response.getBeneficiaryName());
         assertEquals(source.getAccountNumber(), response.getSourceAccount());
         assertEquals(destination.getAccountNumber(), response.getDestinationAccount());
@@ -307,7 +307,7 @@ public class AccountBalanceServiceTest {
         when(repositoryAccount.findById(request.getSourceAccountId())).thenReturn(Optional.empty());
 
         // when + then
-        assertThrows(NoSuchElementException.class, () -> service.createTransfer(request, authentication));
+        assertThrows(AccountNotFoundException.class, () -> service.createTransfer(request, authentication));
         verify(repositoryAccount).findById(request.getSourceAccountId());
         verify(repositoryAccount, never()).findOne(any(Example.class));
         verifyNoInteractions(repositoryTransaction, client);
