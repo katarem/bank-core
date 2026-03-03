@@ -7,13 +7,11 @@ import com.bytecodes.ms_accounts.dto.response.CreateTransferResponse;
 import com.bytecodes.ms_accounts.dto.response.DepositResponse;
 import com.bytecodes.ms_accounts.entity.AccountEntity;
 import com.bytecodes.ms_accounts.entity.TransactionEntity;
+import com.bytecodes.ms_accounts.exception.NotEnoughBalanceException;
 import com.bytecodes.ms_accounts.handler.exceptions.AccountNotFoundException;
 import com.bytecodes.ms_accounts.handler.exceptions.NotOwnAccountException;
 import com.bytecodes.ms_accounts.mapper.TransactionMapper;
-import com.bytecodes.ms_accounts.model.AuthPrincipal;
-import com.bytecodes.ms_accounts.model.JwtClaim;
-import com.bytecodes.ms_accounts.model.TransactionStatus;
-import com.bytecodes.ms_accounts.model.TransactionType;
+import com.bytecodes.ms_accounts.model.*;
 import com.bytecodes.ms_accounts.repository.AccountRepository;
 import com.bytecodes.ms_accounts.repository.TransactionRepository;
 import com.bytecodes.ms_accounts.util.JwtUtil;
@@ -27,6 +25,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -107,7 +106,7 @@ public class AccountBalanceService {
 
         // Retrieve source account
         AccountEntity sourceAccount = repositoryAccount.findById(request.getSourceAccountId())
-                .orElseThrow();
+                .orElseThrow(() -> new AccountNotFoundException(request.getSourceAccountId().toString()));
 
         // use example for easy filtering
         AccountEntity example = new AccountEntity();
@@ -168,7 +167,7 @@ public class AccountBalanceService {
 
         try {
             if (sourceAccount.getBalance().compareTo(request.getAmount().add(FEE)) < 0) {
-                throw new RuntimeException();
+                throw new NotEnoughBalanceException();
             }
             transactions.forEach(transaction -> transaction.setStatus(TransactionStatus.COMPLETED));
         } catch (Exception e) {
@@ -178,6 +177,14 @@ public class AccountBalanceService {
 
         repositoryTransaction.saveAll(transactions);
 
+        TransferStatus transferStatus = transactions.getFirst().getStatus().equals(TransactionStatus.COMPLETED)
+                ? TransferStatus.COMPLETED
+                : TransferStatus.FAILED;
+
+        BigDecimal totalDebited = transferStatus.equals(TransferStatus.COMPLETED)
+                ? request.getAmount().add(FEE)
+                : BigDecimal.ZERO;
+
         return CreateTransferResponse.builder()
                 .transferId(transactionRemoveMoney.getId())
                 .fee(FEE)
@@ -186,7 +193,9 @@ public class AccountBalanceService {
                 .destinationAccount(destinationAccount.getAccountNumber())
                 .concept(request.getConcept())
                 .amount(request.getAmount())
-                .totalDebited(request.getAmount().add(FEE))
+                .status(transferStatus)
+                .timestamp(Instant.now())
+                .totalDebited(totalDebited)
                 .build();
     }
 
