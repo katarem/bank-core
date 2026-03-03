@@ -1,10 +1,12 @@
 package com.bytecodes.ms_customers.service;
 
+import com.bytecodes.ms_customers.dto.response.GetCustomerResponse;
 import com.bytecodes.ms_customers.dto.response.GetProfileResponse;
 import com.bytecodes.ms_customers.dto.response.UpdateProfileResponse;
 import com.bytecodes.ms_customers.entity.CustomerEntity;
 import com.bytecodes.ms_customers.mapper.CustomerMapper;
 import com.bytecodes.ms_customers.dto.request.UpdateProfileRequest;
+import com.bytecodes.ms_customers.model.CustomerStatus;
 import com.bytecodes.ms_customers.repository.CustomerRepository;
 import com.bytecodes.ms_customers.util.JwtUtil;
 import io.jsonwebtoken.JwtException;
@@ -18,6 +20,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @SpringJUnitConfig
 public class CustomerServiceTest {
@@ -133,6 +136,60 @@ public class CustomerServiceTest {
         Assertions.assertThrows(JwtException.class, () ->
                service.updateMyProfile("", new UpdateProfileRequest()));
 
+    }
+
+    @Test
+    void get_customer_ok() {
+
+        UUID customerId = UUID.randomUUID();
+        CustomerEntity entity = new CustomerEntity();
+        entity.setId(customerId);
+        entity.setDni("12345678A");
+        entity.setFirstName("John");
+        entity.setLastName("Doe");
+        entity.setEmail("john.doe@email.com");
+        entity.setStatus(CustomerStatus.ACTIVE);
+
+        Mockito.when(repository.findById(customerId))
+                .thenReturn(Optional.of(entity));
+
+        GetCustomerResponse response = service.getCustomer(customerId);
+
+        Assertions.assertNotNull(response);
+        Assertions.assertEquals(customerId, response.getId());
+        Assertions.assertEquals("12345678A", response.getDni());
+        Assertions.assertEquals("John Doe", response.getFullName());
+        Assertions.assertEquals("john.doe@email.com", response.getEmail());
+        Assertions.assertEquals("ACTIVE", response.getStatus());
+    }
+
+    @Test
+    void get_customer_not_found() {
+
+        UUID customerId = UUID.randomUUID();
+        Mockito.when(repository.findById(customerId))
+                .thenReturn(Optional.empty());
+
+        UsernameNotFoundException exception = Assertions.assertThrows(
+                UsernameNotFoundException.class,
+                () -> service.getCustomer(customerId)
+        );
+
+        Assertions.assertEquals("El usuario no existe", exception.getMessage());
+    }
+
+    @Test
+    void get_customer_null_id() {
+
+        Mockito.when(repository.findById(Mockito.isNull()))
+                .thenReturn(Optional.empty());
+
+        UsernameNotFoundException exception = Assertions.assertThrows(
+                UsernameNotFoundException.class,
+                () -> service.getCustomer(null)
+        );
+
+        Assertions.assertEquals("El usuario no existe", exception.getMessage());
     }
 
 

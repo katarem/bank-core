@@ -1,6 +1,7 @@
 package com.bytecodes.ms_customers.controller;
 
 import com.bytecodes.ms_customers.dto.request.CustomerValidationResponse;
+import com.bytecodes.ms_customers.dto.response.GetCustomerResponse;
 import com.bytecodes.ms_customers.dto.response.GetProfileResponse;
 import com.bytecodes.ms_customers.handler.CustomerExceptionHandler;
 import com.bytecodes.ms_customers.model.Customer;
@@ -17,6 +18,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -252,6 +254,76 @@ public class CustomerControllerTest {
         mockMvc.perform(
                         MockMvcRequestBuilders
                                 .get("/api/customers/validate")
+                )
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void get_customer_ok() throws Exception {
+
+        UUID customerId = UUID.randomUUID();
+        GetCustomerResponse customer = new GetCustomerResponse();
+        customer.setId(customerId);
+        customer.setDni("12345678A");
+        customer.setFullName("User Lastname");
+        customer.setEmail("user@email.com");
+        customer.setStatus("ACTIVE");
+
+        Mockito.when(service.getCustomer(customerId))
+                .thenReturn(customer);
+
+        mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .get("/api/customers/{customerId}", customerId)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(customerId.toString()))
+                .andExpect(jsonPath("$.dni").value("12345678A"))
+                .andExpect(jsonPath("$.fullName").value("User Lastname"))
+                .andExpect(jsonPath("$.email").value("user@email.com"))
+                .andExpect(jsonPath("$.status").value("ACTIVE"));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void get_customer_not_found() throws Exception {
+
+        UUID customerId = UUID.randomUUID();
+
+        Mockito.when(service.getCustomer(customerId))
+                .thenThrow(new UsernameNotFoundException("El usuario no existe"));
+
+        mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .get("/api/customers/{customerId}", customerId)
+                )
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("CUSTOMER_NOT_FOUND"))
+                .andExpect(jsonPath("$.message").value("El usuario no existe"));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void get_customer_invalid_uuid_format() throws Exception {
+
+        String invalidUuid = "invalid-uuid-format";
+
+        mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .get("/api/customers/{customerId}", invalidUuid)
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_UUID_FORMAT"))
+                .andExpect(jsonPath("$.message").value("Formato de ID no válido. Introduce una ID válida"));
+    }
+
+    @Test
+    void get_customer_missing_id() throws Exception {
+
+        mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .get("/api/customers")
                 )
                 .andExpect(status().isNotFound());
     }
