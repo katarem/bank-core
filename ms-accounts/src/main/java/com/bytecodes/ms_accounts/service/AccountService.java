@@ -1,6 +1,9 @@
 package com.bytecodes.ms_accounts.service;
 
 import com.bytecodes.ms_accounts.client.CustomerClient;
+import com.bytecodes.ms_accounts.dto.request.RegisterAccountRequest;
+import com.bytecodes.ms_accounts.dto.response.GetAccountResponse;
+import com.bytecodes.ms_accounts.dto.response.RegisterAccountResponse;
 import com.bytecodes.ms_accounts.entity.AccountEntity;
 import com.bytecodes.ms_accounts.handler.exceptions.AccountNotFoundException;
 import com.bytecodes.ms_accounts.handler.exceptions.CreateAccountLimitExceededException;
@@ -8,6 +11,7 @@ import com.bytecodes.ms_accounts.handler.exceptions.CustomerIsInactiveException;
 import com.bytecodes.ms_accounts.handler.exceptions.NotOwnAccountException;
 import com.bytecodes.ms_accounts.mapper.AccountMapper;
 import com.bytecodes.ms_accounts.model.Account;
+import com.bytecodes.ms_accounts.model.AuthPrincipal;
 import com.bytecodes.ms_accounts.model.JwtClaim;
 import com.bytecodes.ms_accounts.repository.AccountRepository;
 import com.bytecodes.ms_accounts.dto.response.CustomerValidationResponse;
@@ -27,44 +31,46 @@ public class AccountService {
 
     private final AccountRepository repositoryAccount;
     private final AccountMapper mapper = AccountMapper.INSTANCE;
-    private final JwtUtil jwtUtil;
     private final IbanUtil ibanUtil;
     private final CustomerClient customerClient;
 
-    public Account registerAccount(final Account account, final String token) {
-        UUID customerId = UUID.fromString((String) jwtUtil.extractClaim(token, JwtClaim.CUSTOMER_ID));
-
-        CustomerValidationResponse customerValidationResponse = customerClient.validateCustomer(customerId);
+    public RegisterAccountResponse registerAccount(final RegisterAccountRequest request, final AuthPrincipal authentication) {
+        CustomerValidationResponse customerValidationResponse = customerClient.validateCustomer(authentication.getCustomerId());
         if (!customerValidationResponse.isActive()) {
             throw new CustomerIsInactiveException();
         }
 
         //Maximo 3 cuentas por cliente
-        long count = repositoryAccount.countByCustomerId(customerId);
+        long count = repositoryAccount.countByCustomerId(authentication.getCustomerId());
         if (count >= MAX_ACCOUNT_BY_CLIENT) {
             throw new CreateAccountLimitExceededException();
         }
 
+        Account account = mapper.toModel(request);
         AccountEntity entity = mapper.toEntity(account);
-        entity.setCustomerId(customerId);
+
+        entity.setCustomerId(authentication.getCustomerId());
         entity.setAccountNumber(generateIban());
         entity.setDailyWithdrawalLimit(BigDecimal.valueOf(1000));
 
         AccountEntity created = repositoryAccount.save(entity);
 
-        return mapper.toModel(created);
+        Account model = mapper.toModel(created);
+
+        return mapper.toRegisterResponse(model);
     }
 
-    public Account getAccount(final UUID accountId, final String token) {
-        AccountEntity account = repositoryAccount.findById(accountId)
+    public GetAccountResponse getAccount(final UUID accountId, final AuthPrincipal authentication) {
+        AccountEntity entity = repositoryAccount.findById(accountId)
                 .orElseThrow(() -> new AccountNotFoundException(accountId.toString()));
 
-        String customerId = (String) jwtUtil.extractClaim(token, JwtClaim.CUSTOMER_ID);
-        if (!customerId.equals(account.getCustomerId().toString())) {
+        if (!authentication.getCustomerId().equals(entity.getCustomerId())) {
             throw new NotOwnAccountException();
         }
 
-        return mapper.toModel(account);
+        Account account = mapper.toModel(entity);
+
+        return mapper.toGetAccountResponse(account);
     }
 
     /**

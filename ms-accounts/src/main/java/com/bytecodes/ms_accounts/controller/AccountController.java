@@ -1,14 +1,19 @@
 package com.bytecodes.ms_accounts.controller;
 
+import com.bytecodes.ms_accounts.dto.request.RegisterAccountRequest;
 import com.bytecodes.ms_accounts.dto.response.DepositResponse;
 import com.bytecodes.ms_accounts.dto.request.DepositRequest;
+import com.bytecodes.ms_accounts.dto.response.GetAccountResponse;
+import com.bytecodes.ms_accounts.dto.response.RegisterAccountResponse;
 import com.bytecodes.ms_accounts.model.Account;
+import com.bytecodes.ms_accounts.model.AuthPrincipal;
 import com.bytecodes.ms_accounts.service.AccountBalanceService;
 import com.bytecodes.ms_accounts.service.AccountService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -32,16 +37,16 @@ public class AccountController {
 
 
     @PostMapping
-    public ResponseEntity<Account> registerAccount(@RequestBody @Valid Account account,
-                                                   @RequestHeader(value = "Authorization") String token) {
-        Account accountCreated = service.registerAccount(account, token.replace("Bearer ", ""));
+    public ResponseEntity<RegisterAccountResponse> registerAccount(@RequestBody @Valid RegisterAccountRequest request,
+                                                                   @AuthenticationPrincipal AuthPrincipal auth) {
+        RegisterAccountResponse accountCreated = service.registerAccount(request, auth);
         return ResponseEntity.status(HttpStatus.CREATED).body(accountCreated);
     }
 
     @GetMapping("/{accountId}")
-    public ResponseEntity<Account> getAccountById(@PathVariable UUID accountId,
-                                                  @RequestHeader(value = "Authorization") String token) {
-        Account account = service.getAccount(accountId, token.replace("Bearer ", ""));
+    public ResponseEntity<GetAccountResponse> getAccountById(@PathVariable UUID accountId,
+                                                  @AuthenticationPrincipal AuthPrincipal auth) {
+        GetAccountResponse account = service.getAccount(accountId, auth);
         return ResponseEntity.ok(account);
     }
 }
