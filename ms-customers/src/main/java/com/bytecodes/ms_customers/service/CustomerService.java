@@ -3,6 +3,7 @@ package com.bytecodes.ms_customers.service;
 import java.util.UUID;
 
 import com.bytecodes.ms_customers.dto.request.UpdateProfileRequest;
+import com.bytecodes.ms_customers.dto.response.GetCustomerResponse;
 import com.bytecodes.ms_customers.dto.response.GetProfileResponse;
 import com.bytecodes.ms_customers.dto.response.UpdateProfileResponse;
 import com.bytecodes.ms_customers.model.*;
@@ -23,23 +24,18 @@ import lombok.RequiredArgsConstructor;
 public class CustomerService {
 
     private final CustomerRepository repository;
-    private final CustomerMapper mapper = CustomerMapper.INSTANCE;
-    private final JwtUtil jwtUtil;
+    private final CustomerMapper mapper;
 
-    public GetProfileResponse getMyProfile(final String token) {
-        String username = jwtUtil.extractUsername(token);
-
-        Customer model = mapper.toModel(repository.findByEmail(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuario " + username + " no encontrado")));
+    public GetProfileResponse getMyProfile(final AuthPrincipal auth) {
+        Customer model = mapper.toModel(repository.findByEmail(auth.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario " + auth.getUsername() + " no encontrado")));
 
         return mapper.toGetProfileResponse(model);
     }
 
-    public UpdateProfileResponse updateMyProfile(final String token, final UpdateProfileRequest updated) {
-        String username = jwtUtil.extractUsername(token);
-
-        CustomerEntity entity = repository.findByEmail(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuario " + username + " no encontrado"));
+    public UpdateProfileResponse updateMyProfile(final AuthPrincipal auth, final UpdateProfileRequest updated) {
+        CustomerEntity entity = repository.findByEmail(auth.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario " + auth.getUsername() + " no encontrado"));
 
         entity.setFirstName(updated.getFirstName());
         entity.setLastName(updated.getLastName());
@@ -52,12 +48,22 @@ public class CustomerService {
     }
 
 
-    public CustomerValidationResponse validateCustomer(UUID customerId) {
+    public CustomerValidationResponse validateCustomer(final UUID customerId) {
         CustomerEntity customer = repository.findById(customerId)
                 .orElseThrow(() -> new UsernameNotFoundException("El usuario no existe"));
 
         boolean isActive = customer.getStatus() == CustomerStatus.ACTIVE;
 
         return new CustomerValidationResponse(customerId, true, isActive);
+    }
+
+    public GetCustomerResponse getCustomer(final UUID customerId) {
+
+        CustomerEntity entity = repository.findById(customerId)
+                .orElseThrow(() -> new UsernameNotFoundException("El usuario no existe"));
+
+        Customer customer = mapper.toModel(entity);
+
+        return mapper.toGetCustomerResponse(customer);
     }
 }

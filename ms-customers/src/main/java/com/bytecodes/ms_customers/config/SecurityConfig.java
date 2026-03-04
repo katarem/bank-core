@@ -1,6 +1,5 @@
 package com.bytecodes.ms_customers.config;
 
-import com.bytecodes.ms_customers.service.AuthService;
 import com.bytecodes.ms_customers.service.UserDetailsServiceImpl;
 import com.bytecodes.ms_customers.util.JwtUtil;
 import org.springframework.context.annotation.Bean;
@@ -9,7 +8,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -29,7 +27,7 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http,
                                     JwtUtil jwtUtil,
-                                    UserDetailsServiceImpl userDetailsService,
+                                    InternalTokenFilter internalTokenFilter,
                                     AuthenticationProvider authenticationProvider) throws Exception {
 
         http
@@ -41,7 +39,8 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
             )
                 .authenticationProvider(authenticationProvider)
-            .addFilterBefore(new JwtAuthorizationFilter(userDetailsService, jwtUtil), UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(new JwtAuthorizationFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(internalTokenFilter, JwtAuthorizationFilter.class)
             .exceptionHandling(eh -> eh
                                 .authenticationEntryPoint((req, res, ex) -> res.sendError(401))
                                 .accessDeniedHandler((req, res, ex) -> res.sendError(403))

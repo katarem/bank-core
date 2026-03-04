@@ -25,7 +25,7 @@ import java.time.Instant;
 public class AuthService {
 
     private final CustomerRepository repository;
-    private final CustomerMapper mapper = CustomerMapper.INSTANCE;
+    private final CustomerMapper mapper;
     private final AuthenticationManager authenticationManager;
     private final PasswordEncoder encoder;
     private final JwtUtil jwtUtil;
