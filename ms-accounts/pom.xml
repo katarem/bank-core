@@ -5,12 +5,12 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.5.10</version>
+		<version>3.5.11</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.bytecodes</groupId>
 	<artifactId>ms-accounts</artifactId>
-	<version>1.4.0</version>
+	<version>1.5.0</version>
 	<name>ms-accounts</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>
