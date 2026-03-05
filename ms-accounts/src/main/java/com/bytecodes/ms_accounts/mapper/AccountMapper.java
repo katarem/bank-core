@@ -1,6 +1,7 @@
 package com.bytecodes.ms_accounts.mapper;
 
 import com.bytecodes.ms_accounts.dto.request.RegisterAccountRequest;
+import com.bytecodes.ms_accounts.dto.response.AccountSummary;
 import com.bytecodes.ms_accounts.dto.response.GetAccountResponse;
 import com.bytecodes.ms_accounts.dto.response.RegisterAccountResponse;
 import com.bytecodes.ms_accounts.entity.AccountEntity;

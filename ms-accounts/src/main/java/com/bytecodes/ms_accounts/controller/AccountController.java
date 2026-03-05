@@ -36,6 +36,15 @@ public class AccountController {
                                                  auth));
     }
 
+    @PostMapping("/{accountId}/withdraw")
+    public ResponseEntity<DepositResponse> withdraw(@PathVariable UUID accountId,
+                                                    @RequestBody @Valid DepositRequest request,
+                                                    @AuthenticationPrincipal AuthPrincipal auth) {
+        return ResponseEntity.ok(serviceAccountBalance.withdraw(accountId,
+            request,
+            auth));
+    }
+
 
     @PostMapping
     public ResponseEntity<RegisterAccountResponse> registerAccount(@RequestBody @Valid RegisterAccountRequest request,

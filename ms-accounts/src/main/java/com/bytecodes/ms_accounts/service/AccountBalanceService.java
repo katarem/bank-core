@@ -9,6 +9,7 @@ import com.bytecodes.ms_accounts.entity.AccountEntity;
 import com.bytecodes.ms_accounts.entity.TransactionEntity;
 import com.bytecodes.ms_accounts.handler.exceptions.NotEnoughBalanceException;
 import com.bytecodes.ms_accounts.handler.exceptions.AccountNotFoundException;
+import com.bytecodes.ms_accounts.handler.exceptions.DailyWithdrawalLimitExceededException;
 import com.bytecodes.ms_accounts.handler.exceptions.NotOwnAccountException;
 import com.bytecodes.ms_accounts.mapper.TransactionMapper;
 import com.bytecodes.ms_accounts.model.*;
@@ -51,6 +52,9 @@ public class AccountBalanceService {
     private final TransactionMapper mapperTransaction;
     private final CustomerClient client;
     private final JwtUtil jwtUtil;
+
+    @Value("${bank.daily-withdrawal-limit:1000}")
+    private BigDecimal defaultDailyWithdrawalLimit;
 
     @Value("${bank.fee:0}")
     private BigDecimal FEE;
@@ -98,6 +102,53 @@ public class AccountBalanceService {
 
         return mapperTransaction.toDepositResponse(mapperTransaction.toModel(transactionEntity));
 
+    }
+
+    public DepositResponse withdraw(final UUID accountId, final DepositRequest request, final AuthPrincipal auth) {
+        AccountEntity account = repositoryAccount.findById(accountId)
+                .orElseThrow(() -> new AccountNotFoundException(accountId.toString()));
+
+        checkOwnerAccount(auth.getCustomerId(), account);
+
+        BigDecimal amount = request.getAmount();
+        BigDecimal dailyLimit = account.getDailyWithdrawalLimit() == null
+            ? defaultDailyWithdrawalLimit
+                : account.getDailyWithdrawalLimit();
+
+        if (amount.compareTo(dailyLimit) > 0) {
+            throw new DailyWithdrawalLimitExceededException();
+        }
+
+        if (account.getBalance().compareTo(amount) < 0) {
+            throw new NotEnoughBalanceException();
+        }
+
+        BigDecimal balanceBefore = account.getBalance();
+
+        TransactionEntity transactionEntity = TransactionEntity.builder()
+                .accountId(accountId)
+            .type(TransactionType.WITHDRAWAL)
+                .amount(amount)
+                .balanceBefore(balanceBefore)
+                .balanceAfter(balanceBefore.subtract(amount))
+                .concept(request.getDescription())
+                .status(TransactionStatus.PENDING)
+                .build();
+
+        repositoryTransaction.save(transactionEntity);
+
+        try {
+            AccountEntity accountUpdated = this.applyWithdrawal(accountId, amount);
+            transactionEntity.setStatus(TransactionStatus.COMPLETED);
+            transactionEntity.setBalanceAfter(accountUpdated.getBalance());
+        } catch (Exception e) {
+            transactionEntity.setBalanceAfter(balanceBefore);
+            transactionEntity.setStatus(TransactionStatus.FAILED);
+        }
+
+        repositoryTransaction.save(transactionEntity);
+
+        return mapperTransaction.toDepositResponse(mapperTransaction.toModel(transactionEntity));
     }
 
     public CreateTransferResponse createTransfer(final CreateTransferRequest request, final AuthPrincipal authentication) {
@@ -226,6 +277,16 @@ public class AccountBalanceService {
 
         //Lo siguiente no es necesario dado que estamos en una transacción y está managed. Por tanto, automáticamente hibérnate se encagará de hacerlo. Esto es conocido como: "Dirty checking"
         //repositoryAccount.save(accountEntity);
+
+        return accountEntity;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    private AccountEntity applyWithdrawal(UUID accountId, BigDecimal amount) {
+        AccountEntity accountEntity = repositoryAccount.findById(accountId)
+                .orElseThrow(() -> new AccountNotFoundException(accountId.toString()));
+
+        accountEntity.setBalance(accountEntity.getBalance().subtract(amount));
 
         return accountEntity;
     }

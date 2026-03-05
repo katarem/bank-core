@@ -17,6 +17,7 @@ import com.bytecodes.ms_accounts.model.AccountType;
 import com.bytecodes.ms_accounts.model.AuthPrincipal;
 import com.bytecodes.ms_accounts.repository.AccountRepository;
 import com.bytecodes.ms_accounts.util.IbanUtil;
+import com.bytecodes.ms_accounts.util.JwtUtil;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -46,6 +47,9 @@ class AccountServiceTest {
 
     @MockitoBean
     private CustomerClient customerClient;
+
+    @MockitoBean
+    private JwtUtil jwtUtil;
 
     @Autowired
     private AccountMapper mapper;
