@@ -11,7 +11,7 @@ import com.bytecodes.ms_accounts.handler.exceptions.AccountNotFoundException;
 import com.bytecodes.ms_accounts.handler.exceptions.CreateAccountLimitExceededException;
 import com.bytecodes.ms_accounts.handler.exceptions.CustomerIsInactiveException;
 import com.bytecodes.ms_accounts.handler.exceptions.DailyWithdrawalLimitExceededException;
-import com.bytecodes.ms_accounts.handler.exceptions.InsufficientBalanceException;
+import com.bytecodes.ms_accounts.handler.exceptions.NotEnoughBalanceException;
 import com.bytecodes.ms_accounts.handler.exceptions.NotOwnAccountException;
 import com.bytecodes.ms_accounts.model.AccountStatus;
 import com.bytecodes.ms_accounts.model.AccountType;
@@ -325,7 +325,7 @@ public class AccountControllerTest {
                 .build();
 
         Mockito.when(serviceAccountBalance.withdraw(Mockito.eq(accountId), Mockito.any(DepositRequest.class), Mockito.nullable(AuthPrincipal.class)))
-                .thenThrow(new InsufficientBalanceException());
+                .thenThrow(new NotEnoughBalanceException());
 
         mockMvc.perform(
                         MockMvcRequestBuilders

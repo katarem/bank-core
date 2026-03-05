@@ -10,7 +10,6 @@ import com.bytecodes.ms_accounts.entity.TransactionEntity;
 import com.bytecodes.ms_accounts.handler.exceptions.NotEnoughBalanceException;
 import com.bytecodes.ms_accounts.handler.exceptions.AccountNotFoundException;
 import com.bytecodes.ms_accounts.handler.exceptions.DailyWithdrawalLimitExceededException;
-import com.bytecodes.ms_accounts.handler.exceptions.InsufficientBalanceException;
 import com.bytecodes.ms_accounts.handler.exceptions.NotOwnAccountException;
 import com.bytecodes.ms_accounts.mapper.TransactionMapper;
 import com.bytecodes.ms_accounts.model.*;
@@ -121,7 +120,7 @@ public class AccountBalanceService {
         }
 
         if (account.getBalance().compareTo(amount) < 0) {
-            throw new InsufficientBalanceException();
+            throw new NotEnoughBalanceException();
         }
 
         BigDecimal balanceBefore = account.getBalance();
