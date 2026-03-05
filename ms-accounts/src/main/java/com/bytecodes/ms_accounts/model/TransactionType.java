@@ -2,7 +2,7 @@ package com.bytecodes.ms_accounts.model;
 
 public enum TransactionType {
     DEPOSIT,
-    WITHDRAW,
+    WITHDRAWAL,
     TRANSFER_IN,
     TRANSFER_OUT,
     FEE

@@ -218,7 +218,7 @@ public class AccountControllerTest {
         //given
         DepositResponse response = DepositResponse.builder()
                 .transactionId(UUID.randomUUID())
-                .type(TransactionType.WITHDRAW)
+                .type(TransactionType.WITHDRAWAL)
                 .amount(new BigDecimal("200"))
                 .balanceBefore(new BigDecimal("1000"))
                 .balanceAfter(new BigDecimal("800"))
@@ -238,7 +238,7 @@ public class AccountControllerTest {
                                 .content(objectMapper.writeValueAsString(new DepositRequest()))
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.type").value("WITHDRAW"))
+                .andExpect(jsonPath("$.type").value("WITHDRAWAL"))
                 .andExpect(jsonPath("$.description").value(response.getDescription()))
                 .andExpect(jsonPath("$.amount").exists())
                 .andExpect(jsonPath("$.balanceBefore").exists())

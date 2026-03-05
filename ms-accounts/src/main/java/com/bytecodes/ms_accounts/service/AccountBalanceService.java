@@ -48,13 +48,14 @@ import java.util.UUID;
 @Slf4j
 public class AccountBalanceService {
 
-    private static final BigDecimal DEFAULT_DAILY_WITHDRAWAL_LIMIT = BigDecimal.valueOf(1000);
-
     private final TransactionRepository repositoryTransaction;
     private final AccountRepository repositoryAccount;
     private final TransactionMapper mapperTransaction;
     private final CustomerClient client;
     private final JwtUtil jwtUtil;
+
+    @Value("${bank.daily-withdrawal-limit:1000}")
+    private BigDecimal defaultDailyWithdrawalLimit;
 
     @Value("${bank.fee:0}")
     private BigDecimal FEE;
@@ -112,7 +113,7 @@ public class AccountBalanceService {
 
         BigDecimal amount = request.getAmount();
         BigDecimal dailyLimit = account.getDailyWithdrawalLimit() == null
-                ? DEFAULT_DAILY_WITHDRAWAL_LIMIT
+            ? defaultDailyWithdrawalLimit
                 : account.getDailyWithdrawalLimit();
 
         if (amount.compareTo(dailyLimit) > 0) {
@@ -127,7 +128,7 @@ public class AccountBalanceService {
 
         TransactionEntity transactionEntity = TransactionEntity.builder()
                 .accountId(accountId)
-                .type(TransactionType.WITHDRAW)
+            .type(TransactionType.WITHDRAWAL)
                 .amount(amount)
                 .balanceBefore(balanceBefore)
                 .balanceAfter(balanceBefore.subtract(amount))
