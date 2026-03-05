@@ -1,15 +1,19 @@
 package com.bytecodes.ms_accounts.controller;
 
+import com.bytecodes.ms_accounts.dto.request.RegisterAccountRequest;
+import com.bytecodes.ms_accounts.dto.response.AccountSummary;
 import com.bytecodes.ms_accounts.dto.response.DepositResponse;
 import com.bytecodes.ms_accounts.dto.request.DepositRequest;
-import com.bytecodes.ms_accounts.model.Account;
-import com.bytecodes.ms_accounts.response.AccountSummary;
+import com.bytecodes.ms_accounts.dto.response.GetAccountResponse;
+import com.bytecodes.ms_accounts.dto.response.RegisterAccountResponse;
+import com.bytecodes.ms_accounts.model.AuthPrincipal;
 import com.bytecodes.ms_accounts.service.AccountBalanceService;
 import com.bytecodes.ms_accounts.service.AccountService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,26 +30,26 @@ public class AccountController {
     @PostMapping("/{accountId}/deposit")
     public ResponseEntity<DepositResponse> deposit(@PathVariable UUID accountId,
                                                    @RequestBody @Valid DepositRequest request,
-                                                   @RequestHeader(value = "Authorization") String token) {
+                                                   @AuthenticationPrincipal AuthPrincipal auth) {
         return ResponseEntity.ok(serviceAccountBalance.deposit(accountId,
                                                  request,
-                                                 token.replace("Bearer ", "")));
+                                                 auth));
     }
 
     @PostMapping("/{accountId}/withdraw")
     public ResponseEntity<DepositResponse> withdraw(@PathVariable UUID accountId,
                                                     @RequestBody @Valid DepositRequest request,
-                                                    @RequestHeader(value = "Authorization") String token) {
-    return ResponseEntity.ok(serviceAccountBalance.withdraw(accountId,
-                                                    request,
-                                                    token.replace("Bearer ", "")));
+                                                    @AuthenticationPrincipal AuthPrincipal auth) {
+        return ResponseEntity.ok(serviceAccountBalance.withdraw(accountId,
+            request,
+            auth));
     }
 
 
     @PostMapping
-    public ResponseEntity<Account> registerAccount(@RequestBody @Valid Account account,
-                                                   @RequestHeader(value = "Authorization") String token) {
-        Account accountCreated = service.registerAccount(account, token.replace("Bearer ", ""));
+    public ResponseEntity<RegisterAccountResponse> registerAccount(@RequestBody @Valid RegisterAccountRequest request,
+                                                                   @AuthenticationPrincipal AuthPrincipal auth) {
+        RegisterAccountResponse accountCreated = service.registerAccount(request, auth);
         return ResponseEntity.status(HttpStatus.CREATED).body(accountCreated);
     }
 
@@ -56,9 +60,9 @@ public class AccountController {
     }
 
     @GetMapping("/{accountId}")
-    public ResponseEntity<Account> getAccountById(@PathVariable UUID accountId,
-                                                  @RequestHeader(value = "Authorization") String token) {
-        Account account = service.getAccount(accountId, token.replace("Bearer ", ""));
+    public ResponseEntity<GetAccountResponse> getAccountById(@PathVariable UUID accountId,
+                                                  @AuthenticationPrincipal AuthPrincipal auth) {
+        GetAccountResponse account = service.getAccount(accountId, auth);
         return ResponseEntity.ok(account);
     }
 }

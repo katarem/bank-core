@@ -1,14 +1,14 @@
 package com.bytecodes.ms_customers.controller;
 
 import com.bytecodes.ms_customers.dto.request.CustomerValidationResponse;
+import com.bytecodes.ms_customers.dto.response.GetCustomerResponse;
 import com.bytecodes.ms_customers.dto.response.GetProfileResponse;
+import com.bytecodes.ms_customers.dto.response.UpdateProfileResponse;
 import com.bytecodes.ms_customers.handler.CustomerExceptionHandler;
-import com.bytecodes.ms_customers.model.Customer;
+import com.bytecodes.ms_customers.model.AuthPrincipal;
 import com.bytecodes.ms_customers.dto.request.UpdateProfileRequest;
 import com.bytecodes.ms_customers.service.CustomerService;
-import com.bytecodes.ms_customers.util.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +17,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -40,20 +41,7 @@ public class CustomerControllerTest {
     @MockitoBean
     private CustomerService service;
 
-    private String userToken;
-
-    @MockitoBean
-    private JwtUtil jwtUtil;
-
     private final ObjectMapper objectMapper = new ObjectMapper();
-
-    @BeforeEach
-    void setup() {
-        Customer customer = new Customer();
-        customer.setEmail("user@email.com");
-        customer.setPassword("PassWord123");
-        userToken = jwtUtil.generateToken(customer);
-    }
 
     @Test
     void get_me_ok() throws Exception {
@@ -63,14 +51,13 @@ public class CustomerControllerTest {
         safeUser.setFirstName("user");
 
         //when
-        Mockito.when(service.getMyProfile(Mockito.any(String.class)))
+        Mockito.when(service.getMyProfile(Mockito.nullable(AuthPrincipal.class)))
                 .thenReturn(safeUser);
 
         //then
         mockMvc.perform(
                 MockMvcRequestBuilders
                         .get("/api/customers/me")
-                        .header("Authorization", "Bearer " + userToken)
         )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.firstName").value("user"));
@@ -85,14 +72,13 @@ public class CustomerControllerTest {
         safeUser.setFirstName("user");
 
         //when
-        Mockito.when(service.getMyProfile(Mockito.any(String.class)))
+        Mockito.when(service.getMyProfile(Mockito.nullable(AuthPrincipal.class)))
                         .thenThrow(new UsernameNotFoundException(""));
 
         //then
         mockMvc.perform(
                         MockMvcRequestBuilders
                                 .get("/api/customers/me")
-                                .header("Authorization", "Bearer " + userToken)
                 )
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("CUSTOMER_NOT_FOUND"));
@@ -100,18 +86,21 @@ public class CustomerControllerTest {
     }
 
     @Test
-    void get_me_user_token_not_provided() throws Exception {
+    void get_me_without_authprincipal_still_ok() throws Exception {
 
         // given
         var safeUser = new GetProfileResponse();
         safeUser.setFirstName("user");
 
-        //when && then
+        Mockito.when(service.getMyProfile(Mockito.nullable(AuthPrincipal.class)))
+                .thenReturn(safeUser);
+
         mockMvc.perform(
                         MockMvcRequestBuilders
                                 .get("/api/customers/me")
                 )
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.firstName").value("user"));
 
     }
 
@@ -122,14 +111,15 @@ public class CustomerControllerTest {
         safeUser.setFirstName("user");
 
         //when
-        Mockito.when(service.getMyProfile(Mockito.any(String.class)))
-                .thenReturn(safeUser);
+        UpdateProfileResponse updated = new UpdateProfileResponse();
+        updated.setFirstName("user");
+        Mockito.when(service.updateMyProfile(Mockito.nullable(AuthPrincipal.class), Mockito.any(UpdateProfileRequest.class)))
+                .thenReturn(updated);
 
         //then
         mockMvc.perform(
                         MockMvcRequestBuilders
                                 .put("/api/customers/me")
-                                .header("Authorization", "Bearer " + userToken)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(safeUser))
                 )
@@ -143,14 +133,13 @@ public class CustomerControllerTest {
         safeUser.setFirstName("user");
 
         //when
-        Mockito.when(service.updateMyProfile(Mockito.any(String.class), Mockito.any(UpdateProfileRequest.class)))
+        Mockito.when(service.updateMyProfile(Mockito.nullable(AuthPrincipal.class), Mockito.any(UpdateProfileRequest.class)))
                 .thenThrow(new UsernameNotFoundException(""));
 
         //then
         mockMvc.perform(
                         MockMvcRequestBuilders
                                 .put("/api/customers/me")
-                                .header("Authorization", "Bearer " + userToken)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(safeUser))
                 )
@@ -160,20 +149,24 @@ public class CustomerControllerTest {
     }
 
     @Test
-    void put_me_token_not_provided() throws Exception {
+    void put_me_without_authprincipal_still_ok() throws Exception {
 
         // given
         var safeUser = new GetProfileResponse();
         safeUser.setFirstName("user");
 
-        //when && then
+        UpdateProfileResponse updated = new UpdateProfileResponse();
+        updated.setFirstName("user");
+        Mockito.when(service.updateMyProfile(Mockito.nullable(AuthPrincipal.class), Mockito.any(UpdateProfileRequest.class)))
+                .thenReturn(updated);
+
         mockMvc.perform(
                         MockMvcRequestBuilders
                                 .put("/api/customers/me")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(safeUser))
                 )
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -252,6 +245,76 @@ public class CustomerControllerTest {
         mockMvc.perform(
                         MockMvcRequestBuilders
                                 .get("/api/customers/validate")
+                )
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void get_customer_ok() throws Exception {
+
+        UUID customerId = UUID.randomUUID();
+        GetCustomerResponse customer = new GetCustomerResponse();
+        customer.setId(customerId);
+        customer.setDni("12345678A");
+        customer.setFullName("User Lastname");
+        customer.setEmail("user@email.com");
+        customer.setStatus("ACTIVE");
+
+        Mockito.when(service.getCustomer(customerId))
+                .thenReturn(customer);
+
+        mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .get("/api/customers/{customerId}", customerId)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(customerId.toString()))
+                .andExpect(jsonPath("$.dni").value("12345678A"))
+                .andExpect(jsonPath("$.fullName").value("User Lastname"))
+                .andExpect(jsonPath("$.email").value("user@email.com"))
+                .andExpect(jsonPath("$.status").value("ACTIVE"));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void get_customer_not_found() throws Exception {
+
+        UUID customerId = UUID.randomUUID();
+
+        Mockito.when(service.getCustomer(customerId))
+                .thenThrow(new UsernameNotFoundException("El usuario no existe"));
+
+        mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .get("/api/customers/{customerId}", customerId)
+                )
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("CUSTOMER_NOT_FOUND"))
+                .andExpect(jsonPath("$.message").value("El usuario no existe"));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void get_customer_invalid_uuid_format() throws Exception {
+
+        String invalidUuid = "invalid-uuid-format";
+
+        mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .get("/api/customers/{customerId}", invalidUuid)
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_UUID_FORMAT"))
+                .andExpect(jsonPath("$.message").value("Formato de ID no válido. Introduce una ID válida"));
+    }
+
+    @Test
+    void get_customer_missing_id() throws Exception {
+
+        mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .get("/api/customers")
                 )
                 .andExpect(status().isNotFound());
     }

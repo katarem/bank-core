@@ -1,8 +1,8 @@
 package com.bytecodes.ms_accounts.client;
 
 import com.bytecodes.ms_accounts.config.FeignConfig;
-import com.bytecodes.ms_accounts.response.CustomerResponse;
-import com.bytecodes.ms_accounts.response.CustomerValidationResponse;
+import com.bytecodes.ms_accounts.dto.response.CustomerResponse;
+import com.bytecodes.ms_accounts.dto.response.CustomerValidationResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

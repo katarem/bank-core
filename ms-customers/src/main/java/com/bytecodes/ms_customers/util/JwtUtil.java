@@ -1,8 +1,8 @@
 package com.bytecodes.ms_customers.util;
 
 import com.bytecodes.ms_customers.model.Customer;
+import com.bytecodes.ms_customers.model.JwtClaim;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
@@ -11,11 +11,9 @@ import io.jsonwebtoken.security.Keys;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
-import java.time.Clock;
 import java.util.Date;
 import java.util.Map;
 
@@ -72,6 +70,21 @@ public class JwtUtil {
                 .build()
                 .parseSignedClaims(token);
         return jwt.getPayload().getSubject();
+    }
+
+    private Claims extractAllClaims(String token) {
+        SecretKey key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
+
+        return Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
+    public Object extractClaim(String token, JwtClaim claim) {
+        return extractAllClaims(token)
+                .get(claim.getClaimName(), claim.getType());
     }
 
 }

@@ -27,21 +27,6 @@ public class JwtUtil {
     @Value("${jwt.expiration}")
     private long expiration;
 
-    public String generateToken(Authentication auth) {
-        String username = auth.getName();
-        Date now = new Date();
-        Date exp = new Date(now.getTime() + expiration);
-
-        SecretKey key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
-
-        return Jwts.builder()
-                .subject(username)
-                .issuedAt(now)
-                .expiration(exp)
-                .signWith(key)
-                .compact();
-    }
-
     public boolean validateToken(String token) {
         try {
             SecretKey key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));

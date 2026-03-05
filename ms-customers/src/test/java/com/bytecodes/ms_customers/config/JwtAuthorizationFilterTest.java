@@ -1,37 +1,25 @@
 package com.bytecodes.ms_customers.config;
 
-import com.bytecodes.ms_customers.service.AuthService;
-import com.bytecodes.ms_customers.service.UserDetailsServiceImpl;
+import com.bytecodes.ms_customers.model.AuthPrincipal;
+import com.bytecodes.ms_customers.model.JwtClaim;
 import com.bytecodes.ms_customers.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.*;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @SpringJUnitConfig
 class JwtAuthorizationFilterTest {
-
-    @Mock
-    AuthService authService;
-
-    @Mock
-    UserDetailsServiceImpl userDetailsService;
 
     @Mock
     JwtUtil jwtUtil;
@@ -43,38 +31,13 @@ class JwtAuthorizationFilterTest {
 
     @BeforeEach
     void setUp() {
-        filter = new JwtAuthorizationFilter(userDetailsService, jwtUtil);
+        filter = new JwtAuthorizationFilter(jwtUtil);
         SecurityContextHolder.clearContext();
     }
 
     @AfterEach
     void tearDown() {
         SecurityContextHolder.clearContext();
-    }
-
-    @ParameterizedTest
-    @MethodSource("excludedEndpointsProvider")
-    void should_not_filter_returns_true(MockHttpServletRequest req) {
-        // when & then
-        assertTrue(filter.shouldNotFilter(req));
-    }
-
-    private static Stream<Arguments> excludedEndpointsProvider() {
-        return Stream.of(
-                Arguments.of(new MockHttpServletRequest("GET", "/actuator/prometheus")),
-                Arguments.of(new MockHttpServletRequest("GET", "/actuator/health")),
-                Arguments.of(new MockHttpServletRequest("GET", "/api/auth/login"))
-        );
-    }
-
-
-    @Test
-    void should_not_filter_returns_false() {
-        // given
-        var req = new MockHttpServletRequest("GET", "/api/customers");
-
-        // when & then
-        assertFalse(filter.shouldNotFilter(req));
     }
 
     @Test
@@ -87,8 +50,8 @@ class JwtAuthorizationFilterTest {
         // when & then
         filter.doFilterInternal(req, res, filterChain);
 
-        assertEquals(401, res.getStatus());
-        verifyNoInteractions(jwtUtil, authService, filterChain);
+        verifyNoInteractions(jwtUtil);
+        verify(filterChain).doFilter(req, res);
         assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 
@@ -103,8 +66,8 @@ class JwtAuthorizationFilterTest {
         // when & then
         filter.doFilterInternal(req, res, filterChain);
 
-        assertEquals(401, res.getStatus());
-        verifyNoInteractions(jwtUtil, authService, filterChain);
+        verifyNoInteractions(jwtUtil);
+        verify(filterChain).doFilter(req, res);
         assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 
@@ -122,16 +85,15 @@ class JwtAuthorizationFilterTest {
         // then
         filter.doFilterInternal(req, res, filterChain);
 
-        assertEquals(401, res.getStatus());
         verify(jwtUtil).validateToken("invalid-token");
         verify(jwtUtil, never()).extractUsername(anyString());
-        verifyNoInteractions(authService);
-        verifyNoInteractions(filterChain);
+        verify(jwtUtil, never()).extractClaim(anyString(), any(JwtClaim.class));
+        verify(filterChain).doFilter(req, res);
         assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 
     @Test
-    void user_not_found() throws ServletException, IOException {
+    void valid_token_sets_security_context() throws ServletException, IOException {
 
         // given
         var req = new MockHttpServletRequest("GET", "/api/customers");
@@ -140,47 +102,48 @@ class JwtAuthorizationFilterTest {
 
         // when
         when(jwtUtil.validateToken("valid-token")).thenReturn(true);
-        when(jwtUtil.extractUsername("valid-token")).thenReturn("customer");
-        when(userDetailsService.loadUserByUsername("customer")).thenReturn(null);
+        when(jwtUtil.extractUsername("valid-token")).thenReturn("customer@email.com");
+        when(jwtUtil.extractClaim("valid-token", JwtClaim.CUSTOMER_ID)).thenReturn("customer-123");
+        when(jwtUtil.extractClaim("valid-token", JwtClaim.ROLE)).thenReturn("ADMIN");
 
         // then
         filter.doFilterInternal(req, res, filterChain);
 
-        assertEquals(401, res.getStatus());
         verify(jwtUtil).validateToken("valid-token");
         verify(jwtUtil).extractUsername("valid-token");
-        verify(userDetailsService).loadUserByUsername("customer");
-        verifyNoInteractions(filterChain);
-        assertNull(SecurityContextHolder.getContext().getAuthentication());
-    }
-
-    @Test
-    void filters_ok()
-            throws ServletException, IOException {
-
-        // given
-        var req = new MockHttpServletRequest("GET", "/api/customers");
-        req.addHeader("Authorization", "Bearer valid-token");
-        var res = new MockHttpServletResponse();
-
-        UserDetails user = new User("customer", "pw", List.of());
-
-        // when
-        when(jwtUtil.validateToken("valid-token")).thenReturn(true);
-        when(jwtUtil.extractUsername("valid-token")).thenReturn("customer");
-        when(userDetailsService.loadUserByUsername("customer")).thenReturn(user);
-
-        // then
-        filter.doFilterInternal(req, res, filterChain);
-
-        assertNotEquals(401, res.getStatus());
+        verify(jwtUtil).extractClaim("valid-token", JwtClaim.CUSTOMER_ID);
+        verify(jwtUtil).extractClaim("valid-token", JwtClaim.ROLE);
+        verify(filterChain).doFilter(req, res);
 
         var auth = SecurityContextHolder.getContext().getAuthentication();
         assertNotNull(auth);
-        assertEquals("customer", auth.getName());
-        assertSame(user, auth.getPrincipal());
+        assertInstanceOf(UsernamePasswordAuthenticationToken.class, auth);
+        assertEquals("ROLE_ADMIN", auth.getAuthorities().iterator().next().getAuthority());
         assertNotNull(auth.getDetails());
 
+        assertInstanceOf(AuthPrincipal.class, auth.getPrincipal());
+        AuthPrincipal principal = (AuthPrincipal) auth.getPrincipal();
+        assertEquals("customer@email.com", principal.getUsername());
+        assertEquals("customer-123", principal.getCustomerId());
+    }
+
+    @Test
+    void auth_header_without_bearer_prefix_uses_raw_token() throws ServletException, IOException {
+
+        // given
+        var req = new MockHttpServletRequest("GET", "/api/customers");
+        req.addHeader("Authorization", "plain-token");
+        var res = new MockHttpServletResponse();
+
+        // when
+        when(jwtUtil.validateToken("plain-token")).thenReturn(false);
+
+        // then
+        filter.doFilterInternal(req, res, filterChain);
+
+        verify(jwtUtil).validateToken("plain-token");
+        verify(jwtUtil, never()).extractUsername(anyString());
         verify(filterChain).doFilter(req, res);
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 }

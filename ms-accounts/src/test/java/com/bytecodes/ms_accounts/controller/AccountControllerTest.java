@@ -1,7 +1,11 @@
 package com.bytecodes.ms_accounts.controller;
 
 import com.bytecodes.ms_accounts.dto.request.DepositRequest;
+import com.bytecodes.ms_accounts.dto.request.RegisterAccountRequest;
+import com.bytecodes.ms_accounts.dto.response.AccountSummary;
 import com.bytecodes.ms_accounts.dto.response.DepositResponse;
+import com.bytecodes.ms_accounts.dto.response.GetAccountResponse;
+import com.bytecodes.ms_accounts.dto.response.RegisterAccountResponse;
 import com.bytecodes.ms_accounts.handler.AccountExceptionHandler;
 import com.bytecodes.ms_accounts.handler.exceptions.AccountNotFoundException;
 import com.bytecodes.ms_accounts.handler.exceptions.CreateAccountLimitExceededException;
@@ -9,11 +13,9 @@ import com.bytecodes.ms_accounts.handler.exceptions.CustomerIsInactiveException;
 import com.bytecodes.ms_accounts.handler.exceptions.DailyWithdrawalLimitExceededException;
 import com.bytecodes.ms_accounts.handler.exceptions.InsufficientBalanceException;
 import com.bytecodes.ms_accounts.handler.exceptions.NotOwnAccountException;
-import com.bytecodes.ms_accounts.handler.exceptions.UserNotFoundException;
-import com.bytecodes.ms_accounts.model.Account;
 import com.bytecodes.ms_accounts.model.AccountStatus;
 import com.bytecodes.ms_accounts.model.AccountType;
-import com.bytecodes.ms_accounts.response.AccountSummary;
+import com.bytecodes.ms_accounts.model.AuthPrincipal;
 import com.bytecodes.ms_accounts.model.TransactionType;
 import com.bytecodes.ms_accounts.service.AccountBalanceService;
 import com.bytecodes.ms_accounts.service.AccountService;
@@ -30,6 +32,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -40,7 +43,6 @@ import java.time.Instant;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -70,14 +72,14 @@ public class AccountControllerTest {
     @Test
     void register_account_returns_created() throws Exception {
         //given
-        Account account = Account.builder()
+        RegisterAccountResponse account = RegisterAccountResponse.builder()
                 .accountType(AccountType.CHECKING)
                 .currency("EUR")
                 .alias("Mi cuenta corriente")
                 .build();
 
         //when
-        Mockito.when(service.registerAccount(Mockito.any(), Mockito.isNotNull()))
+        Mockito.when(service.registerAccount(Mockito.any(), Mockito.any()))
                 .thenReturn(account);
 
         //then
@@ -125,7 +127,7 @@ public class AccountControllerTest {
     @MethodSource("businessRulesConflictProvider")
     void register_account_violated_business_rules_returns_conflict(RuntimeException exception) throws Exception {
         //given
-        Account account = Account.builder()
+        RegisterAccountResponse account = RegisterAccountResponse.builder()
                 .accountType(AccountType.SAVINGS)
                 .currency("USD")
                 .alias("Mi cuenta")
@@ -170,7 +172,7 @@ public class AccountControllerTest {
                 .build();
 
         //when
-        Mockito.when(serviceAccountBalance.deposit(Mockito.any(UUID.class), Mockito.any(DepositRequest.class), Mockito.any(String.class))).thenReturn(response);
+        Mockito.when(serviceAccountBalance.deposit(Mockito.any(UUID.class), Mockito.any(DepositRequest.class), Mockito.nullable(AuthPrincipal.class))).thenReturn(response);
 
         //then
         mockMvc.perform(
@@ -225,7 +227,7 @@ public class AccountControllerTest {
                 .build();
 
         //when
-        Mockito.when(serviceAccountBalance.withdraw(Mockito.any(UUID.class), Mockito.any(DepositRequest.class), Mockito.any(String.class))).thenReturn(response);
+        Mockito.when(serviceAccountBalance.withdraw(Mockito.any(UUID.class), Mockito.any(DepositRequest.class), Mockito.nullable(AuthPrincipal.class))).thenReturn(response);
 
         //then
         mockMvc.perform(
@@ -246,7 +248,7 @@ public class AccountControllerTest {
         Mockito.verify(serviceAccountBalance).withdraw(
                 Mockito.any(UUID.class),
                 Mockito.any(DepositRequest.class),
-                eq(userToken)
+                Mockito.nullable(AuthPrincipal.class)
         );
     }
 
@@ -278,7 +280,7 @@ public class AccountControllerTest {
                 .description("Retiro")
                 .build();
 
-        Mockito.when(serviceAccountBalance.withdraw(Mockito.eq(accountId), Mockito.any(DepositRequest.class), Mockito.eq(userToken)))
+        Mockito.when(serviceAccountBalance.withdraw(Mockito.eq(accountId), Mockito.any(DepositRequest.class), Mockito.nullable(AuthPrincipal.class)))
                 .thenThrow(new AccountNotFoundException(accountId.toString()));
 
         mockMvc.perform(
@@ -300,7 +302,7 @@ public class AccountControllerTest {
                 .description("Retiro")
                 .build();
 
-        Mockito.when(serviceAccountBalance.withdraw(Mockito.eq(accountId), Mockito.any(DepositRequest.class), Mockito.eq(userToken)))
+        Mockito.when(serviceAccountBalance.withdraw(Mockito.eq(accountId), Mockito.any(DepositRequest.class), Mockito.nullable(AuthPrincipal.class)))
                 .thenThrow(new NotOwnAccountException());
 
         mockMvc.perform(
@@ -322,7 +324,7 @@ public class AccountControllerTest {
                 .description("Retiro")
                 .build();
 
-        Mockito.when(serviceAccountBalance.withdraw(Mockito.eq(accountId), Mockito.any(DepositRequest.class), Mockito.eq(userToken)))
+        Mockito.when(serviceAccountBalance.withdraw(Mockito.eq(accountId), Mockito.any(DepositRequest.class), Mockito.nullable(AuthPrincipal.class)))
                 .thenThrow(new InsufficientBalanceException());
 
         mockMvc.perform(
@@ -345,7 +347,7 @@ public class AccountControllerTest {
                 .description("Retiro")
                 .build();
 
-        Mockito.when(serviceAccountBalance.withdraw(Mockito.eq(accountId), Mockito.any(DepositRequest.class), Mockito.eq(userToken)))
+        Mockito.when(serviceAccountBalance.withdraw(Mockito.eq(accountId), Mockito.any(DepositRequest.class), Mockito.nullable(AuthPrincipal.class)))
                 .thenThrow(new DailyWithdrawalLimitExceededException());
 
         mockMvc.perform(
@@ -361,11 +363,14 @@ public class AccountControllerTest {
     }
 
     @Test
-    void withdraw_without_token_returns_bad_request() throws Exception {
+    void withdraw_without_token_returns_ok_with_filters_disabled() throws Exception {
         DepositRequest request = DepositRequest.builder()
                 .amount(new BigDecimal("100"))
                 .description("Retiro")
                 .build();
+
+        Mockito.when(serviceAccountBalance.withdraw(Mockito.any(UUID.class), Mockito.any(DepositRequest.class), Mockito.nullable(AuthPrincipal.class)))
+                .thenReturn(DepositResponse.builder().build());
 
         mockMvc.perform(
                         MockMvcRequestBuilders
@@ -373,16 +378,18 @@ public class AccountControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                 )
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isOk());
     }
 
     @Test
     void get_account_ok() throws Exception {
         // given
-        Account acc = new Account();
+        GetAccountResponse acc = new GetAccountResponse();
         acc.setId(UUID.randomUUID());
+        acc.setCustomerId(UUID.randomUUID());
+
         // when
-        Mockito.when(service.getAccount(acc.getId(), "Bearer " + userToken))
+        Mockito.when(service.getAccount(Mockito.eq(acc.getId()), Mockito.any()))
                 .thenReturn(acc);
         // then
         mockMvc.perform(
@@ -398,7 +405,7 @@ public class AccountControllerTest {
         UUID accountId = UUID.randomUUID();
 
         // when
-        Mockito.when(service.getAccount(accountId, userToken))//En el llamado a la capa service se debe realizar sin el "Bearer "
+        Mockito.when(service.getAccount(Mockito.eq(accountId), Mockito.any()))
                 .thenThrow(new AccountNotFoundException(accountId.toString()));
 
         // then
@@ -416,7 +423,7 @@ public class AccountControllerTest {
         UUID accountId = UUID.randomUUID();
 
         // when
-        Mockito.when(service.getAccount(accountId, userToken))//El llamado a la capa service lo realiza sin el "Bearer ", dado que el controller lo quita
+        Mockito.when(service.getAccount(Mockito.eq(accountId), Mockito.any()))
                 .thenThrow(new NotOwnAccountException());
 
         // then
@@ -501,15 +508,15 @@ public class AccountControllerTest {
     @Test
     void get_my_accounts_user_not_found() throws Exception {
         Mockito.when(service.getMyAccounts(userToken))
-                .thenThrow(new UserNotFoundException());
+                .thenThrow(new UsernameNotFoundException("No existe el usuario"));
 
         mockMvc.perform(
                         MockMvcRequestBuilders
                                 .get("/api/accounts")
                                 .header("Authorization", "Bearer " + userToken)
                 )
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.code").value("CUSTOMER_NOT_FOUND"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("ACCOUNT_NOT_FOUND"))
                 .andExpect(jsonPath("$.message").value("No existe el usuario"));
     }
 

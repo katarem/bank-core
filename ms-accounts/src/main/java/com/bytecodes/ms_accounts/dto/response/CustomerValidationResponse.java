@@ -1,4 +1,4 @@
-package com.bytecodes.ms_accounts.response;
+package com.bytecodes.ms_accounts.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
