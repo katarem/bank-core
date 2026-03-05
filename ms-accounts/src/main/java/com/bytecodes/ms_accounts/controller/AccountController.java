@@ -45,8 +45,8 @@ public class AccountController {
     }
 
     @GetMapping
-    public ResponseEntity<List<AccountSummary>> getMyAccounts(@RequestHeader(value = "Authorization") String token) {
-        List<AccountSummary> accounts = service.getMyAccounts(token.replace("Bearer ", ""));
+    public ResponseEntity<List<AccountSummary>> getMyAccounts(@AuthenticationPrincipal AuthPrincipal auth) {
+        List<AccountSummary> accounts = service.getMyAccounts(auth);
         return ResponseEntity.ok(accounts);
     }
 

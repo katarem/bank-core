@@ -298,7 +298,7 @@ public class AccountControllerTest {
                 .status(AccountStatus.ACTIVE)
                 .build();
 
-        Mockito.when(service.getMyAccounts(userToken))
+        Mockito.when(service.getMyAccounts(Mockito.nullable(AuthPrincipal.class)))
                 .thenReturn(List.of(acc1, acc2));
 
         mockMvc.perform(
@@ -322,7 +322,7 @@ public class AccountControllerTest {
 
     @Test
     void get_my_accounts_empty_list() throws Exception {
-        Mockito.when(service.getMyAccounts(userToken))
+        Mockito.when(service.getMyAccounts(Mockito.nullable(AuthPrincipal.class)))
                 .thenReturn(List.of());
 
         mockMvc.perform(
@@ -337,7 +337,7 @@ public class AccountControllerTest {
 
     @Test
     void get_my_accounts_user_not_found() throws Exception {
-        Mockito.when(service.getMyAccounts(userToken))
+        Mockito.when(service.getMyAccounts(Mockito.nullable(AuthPrincipal.class)))
                 .thenThrow(new UsernameNotFoundException("El usuario no existe"));
 
         mockMvc.perform(
@@ -351,12 +351,15 @@ public class AccountControllerTest {
     }
 
     @Test
-    void get_my_accounts_without_token_returns_bad_request() throws Exception {
+        void get_my_accounts_without_token_returns_ok_with_filters_disabled() throws Exception {
+                Mockito.when(service.getMyAccounts(Mockito.nullable(AuthPrincipal.class)))
+                                .thenReturn(List.of());
+
         mockMvc.perform(
                         MockMvcRequestBuilders
                                 .get("/api/accounts")
                 )
-                .andExpect(status().isBadRequest());
+                                .andExpect(status().isOk());
     }
 
 

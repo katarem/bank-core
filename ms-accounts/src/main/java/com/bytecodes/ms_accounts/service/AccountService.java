@@ -13,11 +13,9 @@ import com.bytecodes.ms_accounts.handler.exceptions.NotOwnAccountException;
 import com.bytecodes.ms_accounts.mapper.AccountMapper;
 import com.bytecodes.ms_accounts.model.Account;
 import com.bytecodes.ms_accounts.model.AuthPrincipal;
-import com.bytecodes.ms_accounts.model.JwtClaim;
 import com.bytecodes.ms_accounts.repository.AccountRepository;
 import com.bytecodes.ms_accounts.dto.response.CustomerValidationResponse;
 import com.bytecodes.ms_accounts.util.IbanUtil;
-import com.bytecodes.ms_accounts.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -34,7 +32,6 @@ public class AccountService {
     private final AccountRepository repositoryAccount;
     private final AccountMapper mapper;
     private final IbanUtil ibanUtil;
-    private final JwtUtil jwtUtil;
     private final CustomerClient customerClient;
 
     public RegisterAccountResponse registerAccount(final RegisterAccountRequest request, final AuthPrincipal authentication) {
@@ -76,10 +73,8 @@ public class AccountService {
         return mapper.toGetAccountResponse(account);
     }
 
-    public List<AccountSummary> getMyAccounts(final String token) {
-        UUID customerId = UUID.fromString((String) jwtUtil.extractClaim(token, JwtClaim.CUSTOMER_ID));
-
-        List<AccountEntity> entities = repositoryAccount.findAllByCustomerId(customerId);
+    public List<AccountSummary> getMyAccounts(final AuthPrincipal authentication) {
+        List<AccountEntity> entities = repositoryAccount.findAllByCustomerId(authentication.getCustomerId());
         return entities.stream()
             .map(mapper::toSummary)
                 .toList();
