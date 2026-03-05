@@ -6,6 +6,7 @@ import com.bytecodes.ms_accounts.dto.response.GetAccountResponse;
 import com.bytecodes.ms_accounts.dto.response.RegisterAccountResponse;
 import com.bytecodes.ms_accounts.entity.AccountEntity;
 import com.bytecodes.ms_accounts.model.Account;
+import com.bytecodes.ms_accounts.dto.response.AccountSummary;
 import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")

@@ -146,7 +146,7 @@ public class AccountExceptionHandler {
         );
     }
 
-    @ExceptionHandler({AccountNotFoundException.class, UsernameNotFoundException.class})
+   @ExceptionHandler({AccountNotFoundException.class, UsernameNotFoundException.class})
     public ResponseEntity<ErrorDetails> accountNotFound(Exception ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                 ErrorDetails.builder()
