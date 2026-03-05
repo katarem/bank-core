@@ -334,11 +334,11 @@ public class AccountControllerTest {
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$").isEmpty());
     }
-
+ 
     @Test
     void get_my_accounts_user_not_found() throws Exception {
-        Mockito.when(service.getMyAccounts(Mockito.nullable(AuthPrincipal.class)))
-                .thenThrow(new UsernameNotFoundException("El usuario no existe"));
+                Mockito.when(service.getMyAccounts(Mockito.nullable(AuthPrincipal.class)))
+                .thenThrow(new UsernameNotFoundException("No existe el usuario"));
 
         mockMvc.perform(
                         MockMvcRequestBuilders
@@ -346,8 +346,8 @@ public class AccountControllerTest {
                                 .header("Authorization", "Bearer " + userToken)
                 )
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.code").value("CUSTOMER_NOT_FOUND"))
-                .andExpect(jsonPath("$.message").value("El usuario no existe"));
+                .andExpect(jsonPath("$.code").value("ACCOUNT_NOT_FOUND"))
+                .andExpect(jsonPath("$.message").value("No existe el usuario"));
     }
 
     @Test
