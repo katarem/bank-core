@@ -2,6 +2,7 @@ package com.bytecodes.ms_accounts.controller;
 
 import com.bytecodes.ms_accounts.dto.request.DepositRequest;
 import com.bytecodes.ms_accounts.dto.request.RegisterAccountRequest;
+import com.bytecodes.ms_accounts.dto.response.AccountSummary;
 import com.bytecodes.ms_accounts.dto.response.DepositResponse;
 import com.bytecodes.ms_accounts.dto.response.GetAccountResponse;
 import com.bytecodes.ms_accounts.dto.response.RegisterAccountResponse;
@@ -10,6 +11,7 @@ import com.bytecodes.ms_accounts.handler.exceptions.AccountNotFoundException;
 import com.bytecodes.ms_accounts.handler.exceptions.CreateAccountLimitExceededException;
 import com.bytecodes.ms_accounts.handler.exceptions.CustomerIsInactiveException;
 import com.bytecodes.ms_accounts.handler.exceptions.NotOwnAccountException;
+import com.bytecodes.ms_accounts.model.AccountStatus;
 import com.bytecodes.ms_accounts.model.AccountType;
 import com.bytecodes.ms_accounts.model.AuthPrincipal;
 import com.bytecodes.ms_accounts.model.TransactionType;
@@ -28,11 +30,13 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.time.Instant;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -270,6 +274,92 @@ public class AccountControllerTest {
                 )
                 .andExpect(status().isBadRequest());
 
+    }
+
+    @Test
+    void get_my_accounts_ok() throws Exception {
+        AccountSummary acc1 = AccountSummary.builder()
+                .id(UUID.randomUUID())
+                .accountNumber("ES7620770024003102575766")
+                .accountType(AccountType.SAVINGS)
+                .currency("EUR")
+                .balance(new BigDecimal("1500.50"))
+                .alias("Mi cuenta de ahorros")
+                .status(AccountStatus.ACTIVE)
+                .build();
+
+        AccountSummary acc2 = AccountSummary.builder()
+                .id(UUID.randomUUID())
+                .accountNumber("ES9121000418450200051332")
+                .accountType(AccountType.CHECKING)
+                .currency("EUR")
+                .balance(new BigDecimal("3200.00"))
+                .alias("Cuenta nómina")
+                .status(AccountStatus.ACTIVE)
+                .build();
+
+        Mockito.when(service.getMyAccounts(Mockito.nullable(AuthPrincipal.class)))
+                .thenReturn(List.of(acc1, acc2));
+
+        mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .get("/api/accounts")
+                                .header("Authorization", "Bearer " + userToken)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(acc1.getId().toString()))
+                .andExpect(jsonPath("$[0].accountNumber").value(acc1.getAccountNumber()))
+                .andExpect(jsonPath("$[0].accountType").value(acc1.getAccountType().toString()))
+                .andExpect(jsonPath("$[0].currency").value(acc1.getCurrency()))
+                .andExpect(jsonPath("$[0].balance").value(1500.50))
+                .andExpect(jsonPath("$[0].alias").value(acc1.getAlias()))
+                .andExpect(jsonPath("$[0].status").value(acc1.getStatus().toString()))
+                .andExpect(jsonPath("$[0].dailyWithdrawalLimit").doesNotExist())
+                .andExpect(jsonPath("$[0].createdAt").doesNotExist())
+                .andExpect(jsonPath("$[0].updatedAt").doesNotExist())
+                .andExpect(jsonPath("$[0].customerId").doesNotExist());
+    }
+
+    @Test
+    void get_my_accounts_empty_list() throws Exception {
+        Mockito.when(service.getMyAccounts(Mockito.nullable(AuthPrincipal.class)))
+                .thenReturn(List.of());
+
+        mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .get("/api/accounts")
+                                .header("Authorization", "Bearer " + userToken)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$").isEmpty());
+    }
+ 
+    @Test
+    void get_my_accounts_user_not_found() throws Exception {
+                Mockito.when(service.getMyAccounts(Mockito.nullable(AuthPrincipal.class)))
+                .thenThrow(new UsernameNotFoundException("No existe el usuario"));
+
+        mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .get("/api/accounts")
+                                .header("Authorization", "Bearer " + userToken)
+                )
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("ACCOUNT_NOT_FOUND"))
+                .andExpect(jsonPath("$.message").value("No existe el usuario"));
+    }
+
+    @Test
+        void get_my_accounts_without_token_returns_ok_with_filters_disabled() throws Exception {
+                Mockito.when(service.getMyAccounts(Mockito.nullable(AuthPrincipal.class)))
+                                .thenReturn(List.of());
+
+        mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .get("/api/accounts")
+                )
+                                .andExpect(status().isOk());
     }
 
 

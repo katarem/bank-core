@@ -2,6 +2,7 @@ package com.bytecodes.ms_accounts.service;
 
 import com.bytecodes.ms_accounts.client.CustomerClient;
 import com.bytecodes.ms_accounts.dto.request.RegisterAccountRequest;
+import com.bytecodes.ms_accounts.dto.response.AccountSummary;
 import com.bytecodes.ms_accounts.dto.response.GetAccountResponse;
 import com.bytecodes.ms_accounts.dto.response.RegisterAccountResponse;
 import com.bytecodes.ms_accounts.entity.AccountEntity;
@@ -12,15 +13,14 @@ import com.bytecodes.ms_accounts.handler.exceptions.NotOwnAccountException;
 import com.bytecodes.ms_accounts.mapper.AccountMapper;
 import com.bytecodes.ms_accounts.model.Account;
 import com.bytecodes.ms_accounts.model.AuthPrincipal;
-import com.bytecodes.ms_accounts.model.JwtClaim;
 import com.bytecodes.ms_accounts.repository.AccountRepository;
 import com.bytecodes.ms_accounts.dto.response.CustomerValidationResponse;
 import com.bytecodes.ms_accounts.util.IbanUtil;
-import com.bytecodes.ms_accounts.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -71,6 +71,13 @@ public class AccountService {
         Account account = mapper.toModel(entity);
 
         return mapper.toGetAccountResponse(account);
+    }
+
+    public List<AccountSummary> getMyAccounts(final AuthPrincipal authentication) {
+        List<AccountEntity> entities = repositoryAccount.findAllByCustomerId(authentication.getCustomerId());
+        return entities.stream()
+            .map(mapper::toSummary)
+                .toList();
     }
 
     /**
