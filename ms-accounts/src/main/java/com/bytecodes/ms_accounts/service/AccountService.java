@@ -17,6 +17,7 @@ import com.bytecodes.ms_accounts.repository.AccountRepository;
 import com.bytecodes.ms_accounts.dto.response.CustomerValidationResponse;
 import com.bytecodes.ms_accounts.util.IbanUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -25,6 +26,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AccountService {
 
     private static final Integer MAX_ACCOUNT_BY_CLIENT = 3;
@@ -35,6 +37,7 @@ public class AccountService {
     private final CustomerClient customerClient;
 
     public RegisterAccountResponse registerAccount(final RegisterAccountRequest request, final AuthPrincipal authentication) {
+        log.debug("Entering AccountService > registerAccount");
         CustomerValidationResponse customerValidationResponse = customerClient.validateCustomer(authentication.getCustomerId());
         if (!customerValidationResponse.isActive()) {
             throw new CustomerIsInactiveException();
@@ -57,10 +60,14 @@ public class AccountService {
 
         Account model = mapper.toModel(created);
 
+        log.debug("Account registered accountId={}", model.getId());
+        log.debug("Exiting AccountService > registerAccount");
+
         return mapper.toRegisterResponse(model);
     }
 
     public GetAccountResponse getAccount(final UUID accountId, final AuthPrincipal authentication) {
+        log.debug("Entering AccountService > getAccount");
         AccountEntity entity = repositoryAccount.findById(accountId)
                 .orElseThrow(() -> new AccountNotFoundException(accountId.toString()));
 
@@ -70,14 +77,20 @@ public class AccountService {
 
         Account account = mapper.toModel(entity);
 
+        log.info("Account obtained accountId={}", accountId);
+        log.debug("Exiting AccountService > getAccount");
         return mapper.toGetAccountResponse(account);
     }
 
     public List<AccountSummary> getMyAccounts(final AuthPrincipal authentication) {
+        log.debug("Entering AccountService > getMyAccounts");
         List<AccountEntity> entities = repositoryAccount.findAllByCustomerId(authentication.getCustomerId());
-        return entities.stream()
+        var accounts = entities.stream()
             .map(mapper::toSummary)
                 .toList();
+        log.info("Obtained accounts customerId={}", authentication.getCustomerId());
+        log.debug("Exiting AccountService > getMyAccounts");
+        return accounts;
     }
 
     /**
@@ -85,11 +98,13 @@ public class AccountService {
      * @return IBAN español único
      */
     private String generateIban() {
+        log.debug("Entering AccountService > generateIban");
         String iban;
         do {
             iban = ibanUtil.generateSpanishIban();
         } while (repositoryAccount.existsByAccountNumber(iban));
-
+        log.info("Generated IBAN");
+        log.debug("Exiting AccountService > generateIban");
         return iban;
     }
 
