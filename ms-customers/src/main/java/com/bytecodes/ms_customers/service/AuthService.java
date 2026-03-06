@@ -12,6 +12,7 @@ import com.bytecodes.ms_customers.repository.CustomerRepository;
 import com.bytecodes.ms_customers.dto.response.LoginResponse;
 import com.bytecodes.ms_customers.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -22,6 +23,7 @@ import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthService {
 
     private final CustomerRepository repository;
@@ -31,6 +33,8 @@ public class AuthService {
     private final JwtUtil jwtUtil;
 
     public RegisterResponse registerCustomer (final RegisterRequest customer){
+
+        log.debug("Entering AuthService > registerCustomer");
 
         Customer model = mapper.toModel(customer);
 
@@ -43,10 +47,15 @@ public class AuthService {
 
         Customer registered = mapper.toModel(repository.save(mapper.toEntity(model)));
 
+        log.debug("Exiting AuthService > registerCustomer");
+        log.info("Registered customer {}", registered.getId());
+
         return mapper.toRegisterResponse(registered);
     }
 
     public LoginResponse loginCustomer(final LoginRequest request) {
+
+        log.debug("Entering AuthService > loginCustomer");
 
         CustomerEntity databaseEntity = repository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario " + request.getEmail() + " no encontrado"));
@@ -57,6 +66,9 @@ public class AuthService {
         Customer databaseCustomer = mapper.toModel(databaseEntity);
 
         String token = jwtUtil.generateToken(databaseCustomer);
+
+        log.debug("Exiting AuthService > loginCustomer");
+        log.info("Logged in customer {}", databaseCustomer.getId());
 
         return LoginResponse.builder()
                 .token(token)
