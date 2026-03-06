@@ -1,0 +1,253 @@
+{
+  "info": {
+    "_postman_id": "fbe00f50-a565-4321-a5fa-c518df2493fe",
+    "name": "HU-09",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "41327597"
+  },
+  "item": [
+    {
+      "name": "Account Withdrawal",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", () => {\r",
+              "    pm.expect(pm.response.code).to.eql(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Transaction type is WITHDRAWAL\", () => {\r",
+              "    pm.expect(pm.response.json().type).to.eql(\"WITHDRAWAL\");\r",
+              "    });\r",
+              " pm.test(\"Response body contains amount field\", () => {\r",
+              "    const response = pm.response.json();\r",
+              "    pm.expect(response.amount).to.be.a(\"number\");\r",
+              "    pm.expect(response.amount).to.not.be.a(\"string\");\r",
+              "});\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{USER_TOKEN}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n\"amount\": 500,\r\n\"description\": \"Retiro cajero automático\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{ACCOUNT_URL}}/api/accounts/{{ACCOUNT_ID}}/withdraw",
+          "host": [
+            "{{ACCOUNT_URL}}"
+          ],
+          "path": [
+            "api",
+            "accounts",
+            "{{ACCOUNT_ID}}",
+            "withdraw"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Negative deposit",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 400', () => {\r",
+              "    pm.response.to.have.status(400)\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Invalid fields error message\", () => {\r",
+              "    const response = pm.response.json();\r",
+              "    pm.expect(response).to.have.property(\"code\", \"INVALID_FIELDS\");\r",
+              "    pm.expect(response).to.have.property(\"message\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{USER_TOKEN2}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n\"amount\": -200.00,\r\n\"description\": \"Retiro cajero automático\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{ACCOUNT_URL}}/api/accounts/{{ACCOUNT_ID}}/withdraw",
+          "host": [
+            "{{ACCOUNT_URL}}"
+          ],
+          "path": [
+            "api",
+            "accounts",
+            "{{ACCOUNT_ID}}",
+            "withdraw"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Fields invalid",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 400\", () => {\r",
+              "    pm.expect(pm.response.code).to.eql(400);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"INVALID_REQUEST\", () => {\r",
+              "    const response = pm.response.json();\r",
+              "    pm.expect(response).to.have.property(\"code\", \"INVALID_REQUEST\");\r",
+              "    pm.expect(response.message).to.include(\"Solicitud mal formada\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{USER_TOKEN2}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n\"amount\": \"hola\",\r\n\"description\": \"Retiro cajero automático\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{ACCOUNT_URL}}/api/accounts/{{ACCOUNT_ID}}/withdraw",
+          "host": [
+            "{{ACCOUNT_URL}}"
+          ],
+          "path": [
+            "api",
+            "accounts",
+            "{{ACCOUNT_ID}}",
+            "withdraw"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Exceeded the daily withdrawal limit",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 409\", () => {\r",
+              "    pm.expect(pm.response.code).to.eql(409);\r",
+              "});\r",
+              "pm.test(\"BUSINESS_RULE_VIOLATION\", () => {\r",
+              "    const response = pm.response.json();\r",
+              "    pm.expect(response).to.have.property(\"code\", \"BUSINESS_RULE_VIOLATION\");\r",
+              "    pm.expect(response.message).to.include(\"Se excedió el límite diario de retiro\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{USER_TOKEN}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n\"amount\": 100000.00,\r\n\"description\": \"Retiro cajero automático\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{ACCOUNT_URL}}/api/accounts/{{ACCOUNT_ID}}/withdraw",
+          "host": [
+            "{{ACCOUNT_URL}}"
+          ],
+          "path": [
+            "api",
+            "accounts",
+            "{{ACCOUNT_ID}}",
+            "withdraw"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
