@@ -1,5 +1,6 @@
 package com.bytecodes.ms_customers.service;
 
+import com.bytecodes.ms_customers.constant.ErrorConstants;
 import com.bytecodes.ms_customers.dto.request.LoginRequest;
 import com.bytecodes.ms_customers.dto.request.RegisterRequest;
 import com.bytecodes.ms_customers.dto.response.RegisterResponse;
@@ -48,7 +49,7 @@ public class AuthService {
         Customer registered = mapper.toModel(repository.save(mapper.toEntity(model)));
 
         log.debug("Exiting AuthService > registerCustomer");
-        log.info("Registered customer {}", registered.getId());
+        log.info("Registered customer customerId={}", registered.getId());
 
         return mapper.toRegisterResponse(registered);
     }
@@ -58,7 +59,7 @@ public class AuthService {
         log.debug("Entering AuthService > loginCustomer");
 
         CustomerEntity databaseEntity = repository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new UsernameNotFoundException("Usuario " + request.getEmail() + " no encontrado"));
+                .orElseThrow(() -> new UsernameNotFoundException(ErrorConstants.userNotFound(request.getEmail())));
 
         authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
@@ -68,7 +69,7 @@ public class AuthService {
         String token = jwtUtil.generateToken(databaseCustomer);
 
         log.debug("Exiting AuthService > loginCustomer");
-        log.info("Logged in customer {}", databaseCustomer.getId());
+        log.info("Logged in customer customerId={}", databaseCustomer.getId());
 
         return LoginResponse.builder()
                 .token(token)
