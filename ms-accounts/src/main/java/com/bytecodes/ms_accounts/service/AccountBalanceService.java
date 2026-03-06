@@ -51,7 +51,6 @@ public class AccountBalanceService {
     private final AccountRepository repositoryAccount;
     private final TransactionMapper mapperTransaction;
     private final CustomerClient client;
-    private final JwtUtil jwtUtil;
 
     @Value("${bank.daily-withdrawal-limit:1000}")
     private BigDecimal defaultDailyWithdrawalLimit;
@@ -60,6 +59,7 @@ public class AccountBalanceService {
     private BigDecimal FEE;
 
     public DepositResponse deposit(final UUID accountId, final DepositRequest request, final AuthPrincipal auth) {
+        log.debug("Entering AccountBalanceService > deposit");
         AccountEntity account = repositoryAccount.findById(accountId)
                 .orElseThrow(() -> new AccountNotFoundException(accountId.toString()));
 
@@ -89,10 +89,13 @@ public class AccountBalanceService {
             transactionEntity.setStatus(TransactionStatus.COMPLETED);
             //Obtenemos el saldo directamente desde la entidad
             transactionEntity.setBalanceAfter(accountUpdated.getBalance());
+            log.debug("Successful deposit");
 
         } catch (Exception e) {
             //3.2 - Actualizamos transacción a FAILED
             //Dejamos el balance inicial y marcamos la transacción como fallida
+            log.error("Failed deposit");
+            log.debug(e.getMessage());
             transactionEntity.setBalanceAfter(balanceBefore);
             transactionEntity.setStatus(TransactionStatus.FAILED);
 
@@ -100,11 +103,13 @@ public class AccountBalanceService {
 
         repositoryTransaction.save(transactionEntity);
 
+        log.debug("Exiting AccountBalanceService > deposit");
         return mapperTransaction.toDepositResponse(mapperTransaction.toModel(transactionEntity));
 
     }
 
     public DepositResponse withdraw(final UUID accountId, final DepositRequest request, final AuthPrincipal auth) {
+        log.debug("Entering AccountBalanceService > withdraw");
         AccountEntity account = repositoryAccount.findById(accountId)
                 .orElseThrow(() -> new AccountNotFoundException(accountId.toString()));
 
@@ -116,10 +121,12 @@ public class AccountBalanceService {
                 : account.getDailyWithdrawalLimit();
 
         if (amount.compareTo(dailyLimit) > 0) {
+            log.error("Daily withdrawal limit was exceeded");
             throw new DailyWithdrawalLimitExceededException();
         }
 
         if (account.getBalance().compareTo(amount) < 0) {
+            log.error("Not enough balance in account");
             throw new NotEnoughBalanceException();
         }
 
@@ -141,17 +148,23 @@ public class AccountBalanceService {
             AccountEntity accountUpdated = this.applyWithdrawal(accountId, amount);
             transactionEntity.setStatus(TransactionStatus.COMPLETED);
             transactionEntity.setBalanceAfter(accountUpdated.getBalance());
+            log.info("Successful withdraw");
         } catch (Exception e) {
             transactionEntity.setBalanceAfter(balanceBefore);
             transactionEntity.setStatus(TransactionStatus.FAILED);
+            log.warn("Failed withdraw");
+            log.debug(e.getMessage());
         }
 
         repositoryTransaction.save(transactionEntity);
 
+        log.debug("Exiting AccountBalanceService > withdraw");
         return mapperTransaction.toDepositResponse(mapperTransaction.toModel(transactionEntity));
     }
 
     public CreateTransferResponse createTransfer(final CreateTransferRequest request, final AuthPrincipal authentication) {
+
+        log.debug("Entering AccountBalanceService > createTransfer");
 
         // Retrieve source account
         AccountEntity sourceAccount = repositoryAccount.findById(request.getSourceAccountId())
@@ -166,15 +179,18 @@ public class AccountBalanceService {
         // if the destination user is other, we have to check if it's active
         if (!destinationAccount.getCustomerId().equals(authentication.getCustomerId())) {
             var response = client.validateCustomer(authentication.getCustomerId());
-            if (!response.isExists() || !response.isActive())
+            if (!response.isExists() || !response.isActive()) {
+                log.warn("Destination customer does not exist");
                 throw new UsernameNotFoundException("Destination customer does not exist");
+            }
         }
 
         // check if the origin customer is active
         var response = client.validateCustomer(authentication.getCustomerId());
-        if (!response.isExists() || !response.isActive())
+        if (!response.isExists() || !response.isActive()) {
+            log.warn("Origin customer does not exist");
             throw new UsernameNotFoundException("Origin customer does not exist");
-
+        }
         // check if origin customer is owner of origin account
         checkOwnerAccount(authentication.getCustomerId(), sourceAccount);
 
@@ -219,8 +235,11 @@ public class AccountBalanceService {
                 throw new NotEnoughBalanceException();
             }
             transactions.forEach(transaction -> transaction.setStatus(TransactionStatus.COMPLETED));
+            log.info("Successful transfer");
         } catch (Exception e) {
-            log.error("No hubo cantidad suficiente para la transferencia");
+            log.error("Not enough balance for transfer");
+            log.warn("Failed transfer");
+            log.debug(e.getMessage());
             transactions.forEach(transaction -> transaction.setStatus(TransactionStatus.FAILED));
         }
 
@@ -233,6 +252,8 @@ public class AccountBalanceService {
         BigDecimal totalDebited = transferStatus.equals(TransferStatus.COMPLETED)
                 ? request.getAmount().add(FEE)
                 : BigDecimal.ZERO;
+
+        log.debug("Exiting AccountBalanceService > createTransfer");
 
         return CreateTransferResponse.builder()
                 .transferId(transactionRemoveMoney.getId())
@@ -255,9 +276,12 @@ public class AccountBalanceService {
      * @param account    Entidad de cuenta que se desea validar.
      */
     private void checkOwnerAccount(UUID customerId, AccountEntity account) {
+        log.debug("Entering AccountBalanceService > checkOwnerAccount");
         if (!customerId.equals(account.getCustomerId())) {
+            log.warn("Account does not belong to the customer");
             throw new NotOwnAccountException();
         }
+        log.debug("Exiting AccountBalanceService > checkOwnerAccount");
     }
 
     /**
@@ -270,6 +294,7 @@ public class AccountBalanceService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
 //Se ejecuta en una nueva transacción, en caso de que falle, solo se hará rollback de esta Tx. Con esto garantizamos que Transaction siempre quede ya sea con estatus COMPLETED o FAILED
     private AccountEntity applyDeposit(UUID accountId, BigDecimal amount) {
+        log.debug("Entering AccountBalanceService > applyDeposit");
         AccountEntity accountEntity = repositoryAccount.findById(accountId)
                 .orElseThrow(() -> new AccountNotFoundException(accountId.toString()));
 
@@ -278,16 +303,19 @@ public class AccountBalanceService {
         //Lo siguiente no es necesario dado que estamos en una transacción y está managed. Por tanto, automáticamente hibérnate se encagará de hacerlo. Esto es conocido como: "Dirty checking"
         //repositoryAccount.save(accountEntity);
 
+        log.debug("Exiting AccountBalanceService > applyDeposit");
         return accountEntity;
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     private AccountEntity applyWithdrawal(UUID accountId, BigDecimal amount) {
+        log.debug("Entering AccountBalanceService > applyWithdrawal");
         AccountEntity accountEntity = repositoryAccount.findById(accountId)
                 .orElseThrow(() -> new AccountNotFoundException(accountId.toString()));
 
         accountEntity.setBalance(accountEntity.getBalance().subtract(amount));
 
+        log.debug("Exiting AccountBalanceService > applyWithdrawal");
         return accountEntity;
     }
 

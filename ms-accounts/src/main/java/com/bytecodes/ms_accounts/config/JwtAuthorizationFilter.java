@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -21,16 +22,20 @@ import java.util.List;
 import java.util.UUID;
 
 @RequiredArgsConstructor
+@Slf4j
 public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
-    private final HandlerExceptionResolver handlerExceptionResolver;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) throws ServletException, IOException {
 
+        log.debug("Entering JwtAuthorizationFilter > doFilterInternal");
+
         String authHeader = request.getHeader("Authorization");
         if(authHeader == null || authHeader.isEmpty()) {
+            log.debug("Token not provided");
+            log.debug("Exiting JwtAuthorizationFilter > doFilterInternal");
             filterChain.doFilter(request, response);
             return;
         }
@@ -40,6 +45,8 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         boolean isValidToken = jwtUtil.validateToken(token);
 
         if(!isValidToken){
+            log.debug("Invalid token");
+            log.debug("Exiting JwtAuthorizationFilter > doFilterInternal");
             filterChain.doFilter(request, response);
             return;
         }
@@ -56,9 +63,10 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(authPrincipal, null, authorities);
 
-        // Holds the auth for the rest of the call
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
+        log.debug("Authenticated with role={}", authorities.getFirst().getAuthority());
+        log.debug("Exiting JwtAuthorizationFilter > doFilterInternal");
         filterChain.doFilter(request, response);
     }
 
