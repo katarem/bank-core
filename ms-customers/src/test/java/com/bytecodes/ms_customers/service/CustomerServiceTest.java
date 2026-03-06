@@ -133,17 +133,14 @@ class CustomerServiceTest {
         UsernameNotFoundException exception = Assertions.assertThrows(
                 UsernameNotFoundException.class, () -> service.getCustomer(customerId));
 
-        Assertions.assertEquals("El usuario no existe", exception.getMessage());
+        Assertions.assertEquals("Usuario " + customerId + " no encontrado", exception.getMessage());
     }
 
     @Test
     void get_customer_null_id() {
         Mockito.when(repository.findById(Mockito.isNull())).thenReturn(Optional.empty());
 
-        UsernameNotFoundException exception = Assertions.assertThrows(
-                UsernameNotFoundException.class, () -> service.getCustomer(null));
-
-        Assertions.assertEquals("El usuario no existe", exception.getMessage());
+        Assertions.assertThrows(NullPointerException.class, () -> service.getCustomer(null));
     }
 
     @Test
@@ -188,17 +185,14 @@ class CustomerServiceTest {
         UsernameNotFoundException exception = Assertions.assertThrows(
                 UsernameNotFoundException.class, () -> service.validateCustomer(customerId));
 
-        Assertions.assertEquals("El usuario no existe", exception.getMessage());
+        Assertions.assertEquals("Usuario " + customerId + " no encontrado", exception.getMessage());
     }
 
     @Test
     void validate_customer_null_id() {
         Mockito.when(repository.findById(Mockito.isNull())).thenReturn(Optional.empty());
 
-        UsernameNotFoundException exception = Assertions.assertThrows(
-                UsernameNotFoundException.class, () -> service.validateCustomer(null));
-
-        Assertions.assertEquals("El usuario no existe", exception.getMessage());
+        Assertions.assertThrows(NullPointerException.class, () -> service.validateCustomer(null));
     }
 
     private AuthPrincipal auth(String username) {

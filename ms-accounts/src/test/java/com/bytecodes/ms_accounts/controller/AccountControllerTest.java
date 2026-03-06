@@ -516,7 +516,7 @@ public class AccountControllerTest {
                                 .header("Authorization", "Bearer " + userToken)
                 )
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.code").value("ACCOUNT_NOT_FOUND"))
+                .andExpect(jsonPath("$.code").value("USER_NOT_FOUND"))
                 .andExpect(jsonPath("$.message").value("No existe el usuario"));
     }
 

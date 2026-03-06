@@ -24,8 +24,7 @@ public class SecurityConfig {
 
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http,
-                                    JwtUtil jwtUtil,
-                                    HandlerExceptionResolver handlerExceptionResolver) throws Exception {
+                                    JwtUtil jwtUtil) throws Exception {
 
         http
             .csrf(AbstractHttpConfigurer::disable)
@@ -34,7 +33,7 @@ public class SecurityConfig {
                 auth.requestMatchers("/actuator/health","/api/auth/**", "/actuator/prometheus", "/api/accounts/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .anyRequest().authenticated()
             )
-                .addFilterBefore(new JwtAuthorizationFilter(jwtUtil, handlerExceptionResolver), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new JwtAuthorizationFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class)
             .exceptionHandling(eh -> eh
                                 .authenticationEntryPoint((req, res, ex) -> res.sendError(401))
                                 .accessDeniedHandler((req, res, ex) -> res.sendError(403))
