@@ -1,0 +1,825 @@
+{
+  "info": {
+    "_postman_id": "f0628e30-670b-47a2-9090-d4e29d753ba6",
+    "name": "HU-10",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "41327597"
+  },
+  "item": [
+    {
+      "name": "Setup Copy",
+      "item": [
+        {
+          "name": "Create customer Origin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"crear customer devuelve 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.eq(201);",
+                  "});",
+                  "",
+                  "pm.test(\"crear customer devuelve cliente con id\", () => {",
+                  "    const response = pm.response.json();",
+                  "    const customer = JSON.parse(pm.request.body.raw);",
+                  "    pm.expect(response.id).to.not.be.null;",
+                  "    pm.expect(response.id).to.be.a('string');",
+                  "    pm.expect(customer.name).to.be.eq(response.name)",
+                  "    pm.environment.set(\"createdMail\", customer.email);",
+                  "    pm.environment.set(\"createdDni\", customer.dni);",
+                  "    pm.environment.set(\"customerId\", response.id);",
+                  "});",
+                  "",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "function generarDNI() {",
+                  "    const letras = \"TRWAGMYFPDXBNJZSQVHLCKE\";",
+                  "    const numero = Math.floor(10000000 + Math.random() * 90000000);",
+                  "    const letra = letras[numero % 23];",
+                  "    return numero + letra;",
+                  "}",
+                  "",
+                  "pm.variables.set(\"dni_random\", generarDNI());"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"dni\": \"{{dni_random}}\",\n    \"firstName\": \"Carlos\",\n    \"lastName\": \"García López\",\n    \"email\": \"{{$randomUUID}}@email.com\",\n    \"password\": \"Password123!\",\n    \"phone\": \"+34612345678\",\n    \"address\": \"Calle Mayor 123, Madrid\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{CUSTOMER_URL}}/api/auth/register",
+              "host": [
+                "{{CUSTOMER_URL}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+          },
+          "response": []
+        },
+        {
+          "name": "Create customer Destination",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"crear customer devuelve 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.eq(201);",
+                  "});",
+                  "",
+                  "pm.test(\"crear customer devuelve cliente con id\", () => {",
+                  "    const response = pm.response.json();",
+                  "    const customer = JSON.parse(pm.request.body.raw);",
+                  "    pm.expect(response.id).to.not.be.null;",
+                  "    pm.expect(response.id).to.be.a('string');",
+                  "    pm.expect(customer.name).to.be.eq(response.name)",
+                  "    pm.environment.set(\"createdMail2\", customer.email);",
+                  "    pm.environment.set(\"createdDni2\", customer.dni);",
+                  "    pm.environment.set(\"customerId2\", response.id);",
+                  "});",
+                  "",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "function generarDNI() {",
+                  "    const letras = \"TRWAGMYFPDXBNJZSQVHLCKE\";",
+                  "    const numero = Math.floor(10000000 + Math.random() * 90000000);",
+                  "    const letra = letras[numero % 23];",
+                  "    return numero + letra;",
+                  "}",
+                  "",
+                  "pm.variables.set(\"dni_random\", generarDNI());"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"dni\": \"{{dni_random}}\",\n    \"firstName\": \"Carlos\",\n    \"lastName\": \"García López\",\n    \"email\": \"{{$randomUUID}}@email.com\",\n    \"password\": \"Password123!\",\n    \"phone\": \"+34612345678\",\n    \"address\": \"Calle Mayor 123, Madrid\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{CUSTOMER_URL}}/api/auth/register",
+              "host": [
+                "{{CUSTOMER_URL}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+          },
+          "response": []
+        },
+        {
+          "name": "Successful login Origin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();\r",
+                  "\r",
+                  "pm.environment.set('USER_TOKEN', response.token);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"{{createdMail}}\",\n    \"password\": \"{{createdPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{CUSTOMER_URL}}/api/auth/login",
+              "host": [
+                "{{CUSTOMER_URL}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Successful login Destination",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();\r",
+                  "\r",
+                  "pm.environment.set('USER_TOKEN2', response.token);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"{{createdMail}}\",\n    \"password\": \"{{createdPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{CUSTOMER_URL}}/api/auth/login",
+              "host": [
+                "{{CUSTOMER_URL}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create origin account poor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"crear customer devuelve 201\", function () {\r",
+                  "    pm.expect(pm.response.code).to.be.eq(201);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"crear customer devuelve cliente con id\", () => {\r",
+                  "    const response = pm.response.json();\r",
+                  "    const customer = JSON.parse(pm.request.body.raw);\r",
+                  "    pm.expect(response.id).to.not.be.null;\r",
+                  "    pm.expect(response.id).to.be.a('string');\r",
+                  "    pm.expect(customer.name).to.be.eq(response.name)\r",
+                  "    pm.environment.set(\"createdMail\", customer.email);\r",
+                  "    pm.environment.set(\"createdPassword\", customer.password);\r",
+                  "    pm.environment.set(\"ORIGIN_ACCOUNT_ID\", response.id); \r",
+                  "});\r",
+                  "\r",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{USER_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"accountType\": \"SAVINGS\",\r\n    \"currency\": \"EUR\",\r\n    \"alias\": \"Creacion cuenta de ahorro (funciona si es menos de 3 cuentas para el cliente)\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{ACCOUNT_URL}}/api/accounts",
+              "host": [
+                "{{ACCOUNT_URL}}"
+              ],
+              "path": [
+                "api",
+                "accounts"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create destination account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const account = pm.response.json();\r",
+                  "pm.environment.set(\"DESTINATION_ACCOUNT_NUMBER\", account.accountNumber);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{USER_TOKEN2}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"accountType\": \"SAVINGS\",\r\n    \"currency\": \"EUR\",\r\n    \"alias\": \"Creacion cuenta de ahorro (funciona si es menos de 3 cuentas para el cliente)\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{ACCOUNT_URL}}/api/accounts",
+              "host": [
+                "{{ACCOUNT_URL}}"
+              ],
+              "path": [
+                "api",
+                "accounts"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Deposit Origin OK",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Deposit should return 200', () => {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{USER_TOKEN2}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"amount\": 10.00,\r\n    \"description\": \"Depósito en efectivo\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{ACCOUNT_URL}}/api/accounts/{{ACCOUNT_ID}}/deposit",
+              "host": [
+                "{{ACCOUNT_URL}}"
+              ],
+              "path": [
+                "api",
+                "accounts",
+                "{{ACCOUNT_ID}}",
+                "deposit"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Deposit money for account Destination",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const account = pm.response.json();\r",
+                  "pm.environment.set(\"ORIGIN_2_ACCOUNT_ID\", account.id);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{USER_TOKEN2}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"amount\": 10.00,\r\n    \"description\": \"Depósito en efectivo\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{ACCOUNT_URL}}/api/accounts/{{ACCOUNT_ID}}/deposit",
+              "host": [
+                "{{ACCOUNT_URL}}"
+              ],
+              "path": [
+                "api",
+                "accounts",
+                "{{ACCOUNT_ID}}",
+                "deposit"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Validate customers Copy",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('It exists and is active, status code is 200', () => {\r",
+                  "    pm.expect(pm.response.code).to.eql(200)\r",
+                  "})"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{CUSTOMER_URL}}/api/customers/{{customerId}}/validate",
+              "host": [
+                "{{CUSTOMER_URL}}"
+              ],
+              "path": [
+                "api",
+                "customers",
+                "{{customerId}}",
+                "validate"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Transfer without enough balance",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Transfer should return 200', ()=> {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Transaction status is COMPLETED\", () => {\r",
+              "    const r = pm.response.json();\r",
+              "    pm.expect(r.status).to.eql(\"COMPLETED\");\r",
+              "    \r",
+              "});\r",
+              "pm.test(\"Amount is a number\", () => {\r",
+              "       const r = pm.response.json();\r",
+              "    pm.expect(r.amount).to.be.a(\"number\");\r",
+              "});\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{USER_TOKEN}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"sourceAccountId\": \"{{ORIGIN_ACCOUNT_ID}}\",\r\n    \"destinationAccountNumber\": \"{{DESTINATION_ACCOUNT_NUMBER}}\",\r\n    \"amount\": 150.00,\r\n    \"concept\": \"Pago alquiler enero\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{ACCOUNT_URL}}/api/transfers",
+          "host": [
+            "{{ACCOUNT_URL}}"
+          ],
+          "path": [
+            "api",
+            "transfers"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Transfer source account does not exist",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 400\", () => {\r",
+              "    pm.expect(pm.response.code).to.eql(400);\r",
+              "});\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{USER_TOKEN}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"sourceAccountId\": \"ad995c08-a377-47c5-802d-68b7c545e11\",\r\n    \"destinationAccountNumber\": \"{{DESTINATION_ACCOUNT_NUMBER}}\",\r\n    \"amount\": 150.00,\r\n    \"concept\": \"Pago alquiler enero\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{ACCOUNT_URL}}/api/transfers",
+          "host": [
+            "{{ACCOUNT_URL}}"
+          ],
+          "path": [
+            "api",
+            "transfers"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Transfer target account does not exist",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 404\", () => {\r",
+              "    pm.expect(pm.response.code).to.eql(404);\r",
+              "});\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{USER_TOKEN}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"sourceAccountId\": \"{{ORIGIN_ACCOUNT_ID}}\",\r\n    \"destinationAccountNumber\": \"ES1234567891011121314151\",\r\n    \"amount\": 150.00,\r\n    \"concept\": \"Pago alquiler enero\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{ACCOUNT_URL}}/api/transfers",
+          "host": [
+            "{{ACCOUNT_URL}}"
+          ],
+          "path": [
+            "api",
+            "transfers"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "limit exceeded",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 400\", () => {\r",
+              "    pm.expect(pm.response.code).to.eql(400);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Response body contains 'INVALID_FIELDS'\", () => {\r",
+              "    pm.expect(pm.response.text()).to.include('INVALID_FIELDS');\r",
+              "    });"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{USER_TOKEN}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"sourceAccountId\": \"{{ORIGIN_ACCOUNT_ID}}\",\r\n    \"destinationAccountNumber\": \"{{DESTINATION_ACCOUNT_NUMBER}}\",\r\n    \"amount\": 100050.00,\r\n    \"concept\": \"Pago alquiler enero\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{ACCOUNT_URL}}/api/transfers",
+          "host": [
+            "{{ACCOUNT_URL}}"
+          ],
+          "path": [
+            "api",
+            "transfers"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "minimum of one",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 400\", () => {\r",
+              "    pm.expect(pm.response.code).to.eql(400);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Response body contains 'INVALID_FIELDS'\", () => {\r",
+              "    pm.expect(pm.response.text()).to.include('INVALID_FIELDS');\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{USER_TOKEN}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"sourceAccountId\": \"{{ORIGIN_ACCOUNT_ID}}\",\r\n    \"destinationAccountNumber\": \"{{DESTINATION_ACCOUNT_NUMBER}}\",\r\n    \"amount\": 0,\r\n    \"concept\": \"Pago alquiler enero\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{ACCOUNT_URL}}/api/transfers",
+          "host": [
+            "{{ACCOUNT_URL}}"
+          ],
+          "path": [
+            "api",
+            "transfers"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

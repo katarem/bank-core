@@ -1,0 +1,556 @@
+{
+  "info": {
+    "_postman_id": "b48480a4-3c7b-46ef-a1f0-133d580e6ded",
+    "name": "HU-09",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "52397136"
+  },
+  "item": [
+    {
+      "name": "Setup",
+      "item": [
+        {
+          "name": "Create Customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"crear customer devuelve 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.eq(201);",
+                  "});",
+                  "",
+                  "pm.test(\"crear customer devuelve cliente con id\", () => {",
+                  "    const response = pm.response.json();",
+                  "    const customer = JSON.parse(pm.request.body.raw);",
+                  "    pm.expect(response.id).to.not.be.null;",
+                  "    pm.expect(response.id).to.be.a('string');",
+                  "    pm.expect(customer.name).to.be.eq(response.name)",
+                  "    pm.environment.set(\"createdMail\", customer.email);",
+                  "    pm.environment.set(\"createdPassword\", customer.password);",
+                  "    pm.environment.set(\"createdDni\", customer.dni);",
+                  "    pm.environment.set(\"customerId\", response.id);",
+                  "});",
+                  "",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "function generarDNI() {",
+                  "    const letras = \"TRWAGMYFPDXBNJZSQVHLCKE\";",
+                  "    const numero = Math.floor(10000000 + Math.random() * 90000000);",
+                  "    const letra = letras[numero % 23];",
+                  "    return numero + letra;",
+                  "}",
+                  "",
+                  "pm.variables.set(\"dni_random\", generarDNI());"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"dni\": \"{{dni_random}}\",\n    \"firstName\": \"Carlos\",\n    \"lastName\": \"García López\",\n    \"email\": \"{{$randomUUID}}@email.com\",\n    \"password\": \"Password123!\",\n    \"phone\": \"+34612345678\",\n    \"address\": \"Calle Mayor 123, Madrid\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{CUSTOMER_URL}}/api/auth/register",
+              "host": [
+                "{{CUSTOMER_URL}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+          },
+          "response": []
+        },
+        {
+          "name": "Successful login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "pm.test(\"Token exist\", function(){\r",
+                  "    const response = pm.response.json();\r",
+                  "    pm.expect(response.token).to.not.be.null;\r",
+                  "    pm.environment.set(\"USER_TOKEN2\", response.token);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"{{createdMail}}\",\n    \"password\": \"{{createdPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{CUSTOMER_URL}}/api/auth/login",
+              "host": [
+                "{{CUSTOMER_URL}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create origin account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const account = pm.response.json();",
+                  "pm.environment.set(\"ACCOUNT_ID\", account.id);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"accountType\": \"SAVINGS\",\n    \"currency\": \"EUR\",\n    \"alias\": \"Creacion cuenta de ahorro (funciona si es menos de 3 cuentas para el cliente)\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{ACCOUNT_URL}}/api/accounts",
+              "host": [
+                "{{ACCOUNT_URL}}"
+              ],
+              "path": [
+                "api",
+                "accounts"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Deposit on origin account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", () => {\r",
+                  "    pm.expect(pm.response.code).to.eql(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response body contains transactionId\", () => {\r",
+                  "    const response = pm.response.json();\r",
+                  "    pm.expect(response.amount).to.be.a(\"number\");\r",
+                  "    pm.expect(response.amount).to.not.be.a(\"string\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{USER_TOKEN2}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"amount\": 500.00,\r\n    \"description\": \"Depósito en efectivo\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{ACCOUNT_URL}}/api/accounts/{{ACCOUNT_ID}}/deposit",
+              "host": [
+                "{{ACCOUNT_URL}}"
+              ],
+              "path": [
+                "api",
+                "accounts",
+                "{{ACCOUNT_ID}}",
+                "deposit"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Account Withdrawal",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", () => {\r",
+              "    pm.expect(pm.response.code).to.eql(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Transaction type is WITHDRAWAL\", () => {\r",
+              "    pm.expect(pm.response.json().type).to.eql(\"WITHDRAWAL\");\r",
+              "    });\r",
+              " pm.test(\"Response body contains amount field\", () => {\r",
+              "    const response = pm.response.json();\r",
+              "    pm.expect(response.amount).to.be.a(\"number\");\r",
+              "    pm.expect(response.amount).to.not.be.a(\"string\");\r",
+              "});\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{USER_TOKEN}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"amount\": 500,\r\n    \"description\": \"Retiro cajero automático\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{ACCOUNT_URL}}/api/accounts/{{ACCOUNT_ID}}/withdraw",
+          "host": [
+            "{{ACCOUNT_URL}}"
+          ],
+          "path": [
+            "api",
+            "accounts",
+            "{{ACCOUNT_ID}}",
+            "withdraw"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Negative deposit",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 400', () => {\r",
+              "    pm.response.to.have.status(400)\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Invalid fields error message\", () => {\r",
+              "    const response = pm.response.json();\r",
+              "    pm.expect(response).to.have.property(\"code\", \"INVALID_FIELDS\");\r",
+              "    pm.expect(response).to.have.property(\"message\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{USER_TOKEN2}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n\"amount\": -200.00,\r\n\"description\": \"Retiro cajero automático\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{ACCOUNT_URL}}/api/accounts/{{ACCOUNT_ID}}/withdraw",
+          "host": [
+            "{{ACCOUNT_URL}}"
+          ],
+          "path": [
+            "api",
+            "accounts",
+            "{{ACCOUNT_ID}}",
+            "withdraw"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Fields invalid",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 400\", () => {\r",
+              "    pm.expect(pm.response.code).to.eql(400);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"INVALID_REQUEST\", () => {\r",
+              "    const response = pm.response.json();\r",
+              "    pm.expect(response).to.have.property(\"code\", \"INVALID_REQUEST\");\r",
+              "    pm.expect(response.message).to.include(\"Solicitud mal formada\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{USER_TOKEN2}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n\"amount\": \"hola\",\r\n\"description\": \"Retiro cajero automático\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{ACCOUNT_URL}}/api/accounts/{{ACCOUNT_ID}}/withdraw",
+          "host": [
+            "{{ACCOUNT_URL}}"
+          ],
+          "path": [
+            "api",
+            "accounts",
+            "{{ACCOUNT_ID}}",
+            "withdraw"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Exceeded the daily withdrawal limit",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 409\", () => {\r",
+              "    pm.expect(pm.response.code).to.eql(409);\r",
+              "});\r",
+              "pm.test(\"BUSINESS_RULE_VIOLATION\", () => {\r",
+              "    const response = pm.response.json();\r",
+              "    pm.expect(response).to.have.property(\"code\", \"BUSINESS_RULE_VIOLATION\");\r",
+              "    pm.expect(response.message).to.include(\"Se excedió el límite diario de retiro\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{USER_TOKEN}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n\"amount\": 100000.00,\r\n\"description\": \"Retiro cajero automático\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{ACCOUNT_URL}}/api/accounts/{{ACCOUNT_ID}}/withdraw",
+          "host": [
+            "{{ACCOUNT_URL}}"
+          ],
+          "path": [
+            "api",
+            "accounts",
+            "{{ACCOUNT_ID}}",
+            "withdraw"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Should not withdraw money if there is not enough balance",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 409\", () => {\r",
+              "    pm.expect(pm.response.code).to.eql(409);\r",
+              "});\r",
+              "pm.test(\"BUSINESS_RULE_VIOLATION\", () => {\r",
+              "    const response = pm.response.json();\r",
+              "    pm.expect(response).to.have.property(\"code\", \"BUSINESS_RULE_VIOLATION\");\r",
+              "    pm.expect(response.message).to.include(\"Se excedió el límite diario de retiro\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{USER_TOKEN}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n\"amount\": 200.00,\r\n\"description\": \"Retiro cajero automático\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{ACCOUNT_URL}}/api/accounts/{{ACCOUNT_ID}}/withdraw",
+          "host": [
+            "{{ACCOUNT_URL}}"
+          ],
+          "path": [
+            "api",
+            "accounts",
+            "{{ACCOUNT_ID}}",
+            "withdraw"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

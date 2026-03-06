@@ -35,6 +35,7 @@ public class CustomerController {
     }
 
 
+    @PreAuthorize("hasRole('SERVICE')")
     @CrossOrigin(origins = "${app.security.allowed-origin}")
     @GetMapping("/{customerId}/validate")
     public ResponseEntity<CustomerValidationResponse> validateCustomer(@PathVariable UUID customerId) {
