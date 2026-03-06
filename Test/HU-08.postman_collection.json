@@ -1,14 +1,141 @@
 {
   "info": {
-    "_postman_id": "3c631da1-3034-471d-95d2-3c8bb037b7bb",
+    "_postman_id": "63972415-135e-45a0-88c6-851259236c23",
     "name": "HU-08",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "41327597"
+    "_exporter_id": "52397136"
   },
   "item": [
     {
       "name": "Setup",
       "item": [
+        {
+          "name": "Create Customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"crear customer devuelve 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.eq(201);",
+                  "});",
+                  "",
+                  "pm.test(\"crear customer devuelve cliente con id\", () => {",
+                  "    const response = pm.response.json();",
+                  "    const customer = JSON.parse(pm.request.body.raw);",
+                  "    pm.expect(response.id).to.not.be.null;",
+                  "    pm.expect(response.id).to.be.a('string');",
+                  "    pm.expect(customer.name).to.be.eq(response.name)",
+                  "    pm.environment.set(\"createdMail\", customer.email);",
+                  "    pm.environment.set(\"createdPassword\", customer.password);",
+                  "    pm.environment.set(\"createdDni\", customer.dni);",
+                  "    pm.environment.set(\"customerId\", response.id);",
+                  "});",
+                  "",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "function generarDNI() {",
+                  "    const letras = \"TRWAGMYFPDXBNJZSQVHLCKE\";",
+                  "    const numero = Math.floor(10000000 + Math.random() * 90000000);",
+                  "    const letra = letras[numero % 23];",
+                  "    return numero + letra;",
+                  "}",
+                  "",
+                  "pm.variables.set(\"dni_random\", generarDNI());"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"dni\": \"{{dni_random}}\",\n    \"firstName\": \"Carlos\",\n    \"lastName\": \"García López\",\n    \"email\": \"{{$randomUUID}}@email.com\",\n    \"password\": \"Password123!\",\n    \"phone\": \"+34612345678\",\n    \"address\": \"Calle Mayor 123, Madrid\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{CUSTOMER_URL}}/api/auth/register",
+              "host": [
+                "{{CUSTOMER_URL}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+          },
+          "response": []
+        },
+        {
+          "name": "Successful login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "pm.test(\"Token exist\", function(){\r",
+                  "    const response = pm.response.json();\r",
+                  "    pm.expect(response.token).to.not.be.null;\r",
+                  "    pm.environment.set(\"USER_TOKEN2\", response.token);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"{{createdMail}}\",\n    \"password\": \"{{createdPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{CUSTOMER_URL}}/api/auth/login",
+              "host": [
+                "{{CUSTOMER_URL}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
         {
           "name": "Create origin account",
           "event": [

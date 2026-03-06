@@ -1,9 +1,9 @@
 {
   "info": {
-    "_postman_id": "0ea4bdb9-329a-4406-b1d8-96dd22c685ea",
+    "_postman_id": "4378bc18-d269-4340-852e-5e13fe862c92",
     "name": "HU-04",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "41327597"
+    "_exporter_id": "52397136"
   },
   "item": [
     {
@@ -134,7 +134,64 @@
       ]
     },
     {
-      "name": "Validate customers",
+      "name": "Validate customers as a service OK",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('It exists and is active, status code is 200', () => {\r",
+              "    pm.expect(pm.response.code).to.eql(200)\r",
+              "})"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "apikey",
+          "apikey": [
+            {
+              "key": "value",
+              "value": "ms-accounts",
+              "type": "string"
+            },
+            {
+              "key": "key",
+              "value": "X-API-TOKEN",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": ""
+        },
+        "url": {
+          "raw": "{{CUSTOMER_URL}}/api/customers/{{customerId}}/validate",
+          "host": [
+            "{{CUSTOMER_URL}}"
+          ],
+          "path": [
+            "api",
+            "customers",
+            "{{customerId}}",
+            "validate"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Validate customers external",
       "event": [
         {
           "listen": "test",
