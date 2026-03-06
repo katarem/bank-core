@@ -1,0 +1,304 @@
+{
+  "info": {
+    "_postman_id": "13f9323b-b8d6-488b-8e8f-20a173961232",
+    "name": "HU-01",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "41327597"
+  },
+  "item": [
+    {
+      "name": "Create customer returns created",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"crear customer devuelve 201\", function () {",
+              "    pm.expect(pm.response.code).to.be.eq(201);",
+              "});",
+              "",
+              "pm.test(\"crear customer devuelve cliente con id\", () => {",
+              "    const response = pm.response.json();",
+              "    const customer = JSON.parse(pm.request.body.raw);",
+              "    pm.expect(response.id).to.not.be.null;",
+              "    pm.expect(response.id).to.be.a('string');",
+              "    pm.expect(customer.name).to.be.eq(response.name)",
+              "    pm.environment.set(\"createdMail\", customer.email);",
+              "    pm.environment.set(\"createdDni\", customer.dni);",
+              "    pm.environment.set(\"customerId\", response.id);",
+              "});",
+              "",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "function generarDNI() {",
+              "    const letras = \"TRWAGMYFPDXBNJZSQVHLCKE\";",
+              "    const numero = Math.floor(10000000 + Math.random() * 90000000);",
+              "    const letra = letras[numero % 23];",
+              "    return numero + letra;",
+              "}",
+              "",
+              "pm.variables.set(\"dni_random\", generarDNI());"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"dni\": \"{{dni_random}}\",\n    \"firstName\": \"Carlos\",\n    \"lastName\": \"García López\",\n    \"email\": \"{{$randomUUID}}@email.com\",\n    \"password\": \"Password123!\",\n    \"phone\": \"+34612345678\",\n    \"address\": \"Calle Mayor 123, Madrid\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{CUSTOMER_URL}}/api/auth/register",
+          "host": [
+            "{{CUSTOMER_URL}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "register"
+          ]
+        },
+        "description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+      },
+      "response": []
+    },
+    {
+      "name": "Create customer returns bad request",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"crear customer devuelve 400\", function () {",
+              "    pm.expect(pm.response.code).to.be.eq(400);",
+              "});",
+              "",
+              "pm.test(\"crear customer devuelve error por mal email\", () => {",
+              "    const response = pm.response.json();",
+              "    pm.expect(response.code).to.be.a('string');",
+              "    pm.expect(response.code).to.be.not.be.null;",
+              "    pm.expect(response.code).to.be.eq('INVALID_FIELDS');",
+              "    pm.expect(response.message).to.be.a('string');",
+              "    pm.expect(response.message).to.not.be.null;",
+              "    pm.expect(response.message).to.include('El email debe tener un formato válido')",
+              "});",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "function generarDNI() {",
+              "    const letras = \"TRWAGMYFPDXBNJZSQVHLCKE\";",
+              "    const numero = Math.floor(10000000 + Math.random() * 90000000);",
+              "    const letra = letras[numero % 23];",
+              "    return numero + letra;",
+              "}",
+              "",
+              "pm.variables.set(\"dni_random\", generarDNI());"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"dni\": \"{{dni_random}}\",\n    \"firstName\": \"Carlos\",\n    \"lastName\": \"García López\",\n    \"email\": \"{{$randomUUID}}.email.com\",\n    \"password\": \"Password123!\",\n    \"phone\": \"+34612345678\",\n    \"address\": \"Calle Mayor 123, Madrid\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{CUSTOMER_URL}}/api/auth/register",
+          "host": [
+            "{{CUSTOMER_URL}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "register"
+          ]
+        },
+        "description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+      },
+      "response": []
+    },
+    {
+      "name": "Create customer returns conflict dni",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"crear customer devuelve 409\", function () {",
+              "    pm.expect(pm.response.code).to.be.eq(409);",
+              "});",
+              "",
+              "pm.test(\"crear customer devuelve error por mal email duplicado\", () => {",
+              "    const response = pm.response.json();",
+              "    pm.expect(response.code).to.be.a('string');",
+              "    pm.expect(response.code).to.be.not.be.null;",
+              "    pm.expect(response.code).to.be.eq('CUSTOMER_CONFLICT');",
+              "    pm.expect(response.message).to.be.a('string');",
+              "    pm.expect(response.message).to.not.be.null;",
+              "    pm.expect(response.message).to.include('El DNI ya está registrado')",
+              "});",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "function generarDNI() {",
+              "    const letras = \"TRWAGMYFPDXBNJZSQVHLCKE\";",
+              "    const numero = Math.floor(10000000 + Math.random() * 90000000);",
+              "    const letra = letras[numero % 23];",
+              "    return numero + letra;",
+              "}",
+              "",
+              "pm.variables.set(\"dni_random\", generarDNI());"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"dni\": \"{{createdDni}}\",\n    \"firstName\": \"Carlos\",\n    \"lastName\": \"García López\",\n    \"email\": \"{{$randomUUID}}@email.com\",\n    \"password\": \"Password123!\",\n    \"phone\": \"+34612345678\",\n    \"address\": \"Calle Mayor 123, Madrid\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{CUSTOMER_URL}}/api/auth/register",
+          "host": [
+            "{{CUSTOMER_URL}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "register"
+          ]
+        },
+        "description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+      },
+      "response": []
+    },
+    {
+      "name": "Create customer returns conflict mail",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"crear customer devuelve 409\", function () {",
+              "    pm.expect(pm.response.code).to.be.eq(409);",
+              "});",
+              "",
+              "pm.test(\"crear customer devuelve error por mal email duplicado\", () => {",
+              "    const response = pm.response.json();",
+              "    pm.expect(response.code).to.be.a('string');",
+              "    pm.expect(response.code).to.be.not.be.null;",
+              "    pm.expect(response.code).to.be.eq('CUSTOMER_CONFLICT');",
+              "    pm.expect(response.message).to.be.a('string');",
+              "    pm.expect(response.message).to.not.be.null;",
+              "    pm.expect(response.message).to.include('El email ya está registrado');",
+              "});",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "function generarDNI() {",
+              "    const letras = \"TRWAGMYFPDXBNJZSQVHLCKE\";",
+              "    const numero = Math.floor(10000000 + Math.random() * 90000000);",
+              "    const letra = letras[numero % 23];",
+              "    return numero + letra;",
+              "}",
+              "",
+              "pm.variables.set(\"dni_random\", generarDNI());"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"dni\": \"{{dni_random}}\",\n    \"firstName\": \"Carlos\",\n    \"lastName\": \"García López\",\n    \"email\": \"{{createdMail}}\",\n    \"password\": \"Password123!\",\n    \"phone\": \"+34612345678\",\n    \"address\": \"Calle Mayor 123, Madrid\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{CUSTOMER_URL}}/api/auth/register",
+          "host": [
+            "{{CUSTOMER_URL}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "register"
+          ]
+        },
+        "description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+      },
+      "response": []
+    }
+  ]
+}

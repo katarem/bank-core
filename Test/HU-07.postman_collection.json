@@ -1,0 +1,282 @@
+{
+  "info": {
+    "_postman_id": "9a321b1b-e060-4e3d-8fc3-0da67cd6c658",
+    "name": "HU-07",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "41327597"
+  },
+  "item": [
+    {
+      "name": "Setup",
+      "item": [
+        {
+          "name": "Create account Copy",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", () => {\r",
+                  "   pm.expect(pm.response.code).to.eql(201);\r",
+                  "});\r",
+                  "pm.test(\"Response has account id\", () => {\r",
+                  "    const response = pm.response.json(); \r",
+                  "        pm.expect(response).to.have.property(\"id\");\r",
+                  "        pm.expect(response.id).to.not.be.null;\r",
+                  "        pm.expect(response.id).to.be.a(\"string\");\r",
+                  "        pm.environment.set(\"ACCOUNT_ID2\", response.id); \r",
+                  "    \r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{USER_TOKEN2}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"accountType\": \"SAVINGS\",\r\n    \"currency\": \"EUR\",\r\n    \"alias\": \"Creacion cuenta de ahorro (funciona si es menos de 3 cuentas para el cliente)\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{ACCOUNT_URL}}/api/accounts",
+              "host": [
+                "{{ACCOUNT_URL}}"
+              ],
+              "path": [
+                "api",
+                "accounts"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Get Account OK",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', () => {",
+              "    pm.response.to.have.status(200)",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{USER_TOKEN}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{ACCOUNT_URL}}/api/accounts/{{ACCOUNT_ID2}}",
+          "host": [
+            "{{ACCOUNT_URL}}"
+          ],
+          "path": [
+            "api",
+            "accounts",
+            "{{ACCOUNT_ID2}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Invalid ID",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 404', () => {",
+              "    pm.response.to.have.status(404)",
+              "});",
+              "",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{USER_TOKEN}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{ACCOUNT_URL}}/api/accounts/ad597b27-fe0b-426a-adbb-c34050f68fa",
+          "host": [
+            "{{ACCOUNT_URL}}"
+          ],
+          "path": [
+            "api",
+            "accounts",
+            "ad597b27-fe0b-426a-adbb-c34050f68fa"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Invalid Format ID",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 400', () => {",
+              "    pm.response.to.have.status(400)",
+              "});",
+              "pm.test('Response body contains correct error message', () => {",
+              "    pm.expect(pm.response.text()).to.include('INVALID_FIELDS')",
+              "    pm.expect(pm.response.text()).to.include('accountId: java.util.UUID')",
+              "})"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{USER_TOKEN}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{ACCOUNT_URL}}/api/accounts/ad597b27-fe0b-426a-adbb-",
+          "host": [
+            "{{ACCOUNT_URL}}"
+          ],
+          "path": [
+            "api",
+            "accounts",
+            "ad597b27-fe0b-426a-adbb-"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

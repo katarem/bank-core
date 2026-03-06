@@ -1,0 +1,130 @@
+{
+  "info": {
+    "_postman_id": "5c0aaf0d-e420-4e91-9460-1391934c7e01",
+    "name": "HU-05",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "41327597"
+  },
+  "item": [
+    {
+      "name": "Create account",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 201\", () => {\r",
+              "   pm.expect(pm.response.code).to.eql(201);\r",
+              "});\r",
+              "pm.test(\"Response has account id\", () => {\r",
+              "    const response = pm.response.json(); \r",
+              "        pm.expect(response).to.have.property(\"id\");\r",
+              "        pm.expect(response.id).to.not.be.null;\r",
+              "        pm.expect(response.id).to.be.a(\"string\");\r",
+              "        pm.environment.set(\"ACCOUNT_ID\", response.id); \r",
+              "    \r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{USER_TOKEN}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"accountType\": \"SAVINGS\",\r\n    \"currency\": \"EUR\",\r\n    \"alias\": \"Creacion cuenta de ahorro (funciona si es menos de 3 cuentas para el cliente)\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{ACCOUNT_URL}}/api/accounts",
+          "host": [
+            "{{ACCOUNT_URL}}"
+          ],
+          "path": [
+            "api",
+            "accounts"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Invalid Type",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 400\", () => {\r",
+              "    pm.expect(pm.response.code).to.eql(400);\r",
+              "});\r",
+              "pm.test(\"Response has INVALID_REQUEST code and message\", () => {\r",
+              "    const response = pm.response.json();\r",
+              "        pm.expect(response).to.have.property(\"code\", \"INVALID_REQUEST\");\r",
+              "        pm.expect(response).to.have.property(\"message\");\r",
+              "   \r",
+              "});\r",
+              "\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{USER_TOKEN}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"accountType\": \"SAVINGSd\",\r\n    \"currency\": \"EUR\",\r\n    \"alias\": \"Creacion cuenta de ahorro (funciona si es menos de 3 cuentas para el cliente)\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{ACCOUNT_URL}}/api/accounts",
+          "host": [
+            "{{ACCOUNT_URL}}"
+          ],
+          "path": [
+            "api",
+            "accounts"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

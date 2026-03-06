@@ -1,0 +1,249 @@
+{
+  "info": {
+    "_postman_id": "3c631da1-3034-471d-95d2-3c8bb037b7bb",
+    "name": "HU-08",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "41327597"
+  },
+  "item": [
+    {
+      "name": "Setup",
+      "item": [
+        {
+          "name": "Create origin account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const account = pm.response.json();",
+                  "pm.environment.set(\"ACCOUNT_ID\", account.id);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"accountType\": \"SAVINGS\",\n    \"currency\": \"EUR\",\n    \"alias\": \"Creacion cuenta de ahorro (funciona si es menos de 3 cuentas para el cliente)\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{ACCOUNT_URL}}/api/accounts",
+              "host": [
+                "{{ACCOUNT_URL}}"
+              ],
+              "path": [
+                "api",
+                "accounts"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Deposit OK",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", () => {\r",
+              "    pm.expect(pm.response.code).to.eql(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Response body contains transactionId\", () => {\r",
+              "    const response = pm.response.json();\r",
+              "    pm.expect(response.amount).to.be.a(\"number\");\r",
+              "    pm.expect(response.amount).to.not.be.a(\"string\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "packages": {},
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{USER_TOKEN2}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"amount\": 10.00,\r\n    \"description\": \"Depósito en efectivo\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{ACCOUNT_URL}}/api/accounts/{{ACCOUNT_ID}}/deposit",
+          "host": [
+            "{{ACCOUNT_URL}}"
+          ],
+          "path": [
+            "api",
+            "accounts",
+            "{{ACCOUNT_ID}}",
+            "deposit"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Negative deposit",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 400', () => {\r",
+              "    pm.response.to.have.status(400)\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Invalid fields error message\", () => {\r",
+              "    const response = pm.response.json();\r",
+              "    pm.expect(response).to.have.property(\"code\", \"INVALID_FIELDS\");\r",
+              "    pm.expect(response).to.have.property(\"message\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{USER_TOKEN2}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"amount\": -10.00,\r\n    \"description\": \"Depósito en efectivo\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{ACCOUNT_URL}}/api/accounts/:accountId/deposit",
+          "host": [
+            "{{ACCOUNT_URL}}"
+          ],
+          "path": [
+            "api",
+            "accounts",
+            ":accountId",
+            "deposit"
+          ],
+          "variable": [
+            {
+              "key": "accountId",
+              "value": "{{ACCOUNT_ID}}"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Deposit fields invalid",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 400\", () => {\r",
+              "    pm.expect(pm.response.code).to.eql(400);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"INVALID_REQUEST\", () => {\r",
+              "    const response = pm.response.json();\r",
+              "    pm.expect(response).to.have.property(\"code\", \"INVALID_REQUEST\");\r",
+              "    pm.expect(response.message).to.include(\"Solicitud mal formada\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{USER_TOKEN}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"amount\": \"hola\",\r\n    \"description\": \"Depósito en efectivo\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{ACCOUNT_URL}}/api/accounts/{{ACCOUNT_ID}}/deposit",
+          "host": [
+            "{{ACCOUNT_URL}}"
+          ],
+          "path": [
+            "api",
+            "accounts",
+            "{{ACCOUNT_ID}}",
+            "deposit"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

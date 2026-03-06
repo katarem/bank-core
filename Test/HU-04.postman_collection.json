@@ -1,0 +1,273 @@
+{
+  "info": {
+    "_postman_id": "0ea4bdb9-329a-4406-b1d8-96dd22c685ea",
+    "name": "HU-04",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "41327597"
+  },
+  "item": [
+    {
+      "name": "setup",
+      "item": [
+        {
+          "name": "Register user for testing",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"crear customer devuelve 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.eq(201);",
+                  "});",
+                  "",
+                  "pm.test(\"crear customer devuelve cliente con id\", () => {",
+                  "    const response = pm.response.json();",
+                  "    const customer = JSON.parse(pm.request.body.raw);",
+                  "    pm.expect(response.id).to.not.be.null;",
+                  "    pm.expect(response.id).to.be.a('string');",
+                  "    pm.expect(customer.name).to.be.eq(response.name)",
+                  "    pm.environment.set(\"createdMail\", customer.email);",
+                  "    pm.environment.set(\"createdPassword\", customer.password);",
+                  "});",
+                  "",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "function generarDNI() {",
+                  "    const letras = \"TRWAGMYFPDXBNJZSQVHLCKE\";",
+                  "    const numero = Math.floor(10000000 + Math.random() * 90000000);",
+                  "    const letra = letras[numero % 23];",
+                  "    return numero + letra;",
+                  "}",
+                  "",
+                  "pm.variables.set(\"dni_random\", generarDNI());"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"dni\": \"{{dni_random}}\",\n    \"firstName\": \"Carlos\",\n    \"lastName\": \"García López\",\n    \"email\": \"{{$randomUUID}}@email.com\",\n    \"password\": \"Password123!\",\n    \"phone\": \"+34612345678\",\n    \"address\": \"Calle Mayor 123, Madrid\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{CUSTOMER_URL}}/api/auth/register",
+              "host": [
+                "{{CUSTOMER_URL}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+          },
+          "response": []
+        },
+        {
+          "name": "Successful login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "pm.test(\"Token exist\", function(){\r",
+                  "    const response = pm.response.json();\r",
+                  "    pm.expect(response.token).to.not.be.null;\r",
+                  "    pm.environment.set(\"USER_TOKEN\", response.token);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"{{createdMail}}\",\n    \"password\": \"{{createdPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{CUSTOMER_URL}}/api/auth/login",
+              "host": [
+                "{{CUSTOMER_URL}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Validate customers",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('It exists and is active, status code is 200', () => {\r",
+              "    pm.expect(pm.response.code).to.eql(200)\r",
+              "})"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": ""
+        },
+        "url": {
+          "raw": "{{CUSTOMER_URL}}/api/customers/{{customerId}}/validate",
+          "host": [
+            "{{CUSTOMER_URL}}"
+          ],
+          "path": [
+            "api",
+            "customers",
+            "{{customerId}}",
+            "validate"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Customer not found",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 404', () => {\r",
+              "    pm.expect(pm.response.code).to.eql(404)\r",
+              "})\r",
+              "pm.test(\"Response has CUSTOMER_NOT_FOUND code and proper message\", ()=>{\r",
+              "    const response = pm.response.json();\r",
+              "    pm.expect(response).to.have.property(\"code\", \"CUSTOMER_NOT_FOUND\");\r",
+              "    pm.expect(response).to.have.property(\"message\", \"El usuario no existe\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": ""
+        },
+        "url": {
+          "raw": "{{CUSTOMER_URL}}/api/customers/7c61f6b4-e7a5-4937-ab6a-10a494feff3/validate",
+          "host": [
+            "{{CUSTOMER_URL}}"
+          ],
+          "path": [
+            "api",
+            "customers",
+            "7c61f6b4-e7a5-4937-ab6a-10a494feff3",
+            "validate"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Invalid UUID format",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 400', () => {\r",
+              "    pm.expect(pm.response.code).to.eql(400)\r",
+              "})\r",
+              "pm.test(\"Response has CUSTOMER_NOT_FOUND code and proper message\", ()=>{\r",
+              "    const response = pm.response.json();\r",
+              "    pm.expect(response).to.have.property(\"code\", \"INVALID_UUID_FORMAT\");\r",
+              "    pm.expect(response).to.have.property(\"message\", \"Formato de ID no válido. Introduce una ID válida\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": ""
+        },
+        "url": {
+          "raw": "{{CUSTOMER_URL}}/api/customers/7c61f6b4-e7a5-4937-ab6a--/validate",
+          "host": [
+            "{{CUSTOMER_URL}}"
+          ],
+          "path": [
+            "api",
+            "customers",
+            "7c61f6b4-e7a5-4937-ab6a--",
+            "validate"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
