@@ -89,12 +89,12 @@ public class AccountBalanceService {
             transactionEntity.setStatus(TransactionStatus.COMPLETED);
             //Obtenemos el saldo directamente desde la entidad
             transactionEntity.setBalanceAfter(accountUpdated.getBalance());
-            log.debug("Successful deposit");
+            log.info("Successful deposit");
 
         } catch (Exception e) {
             //3.2 - Actualizamos transacción a FAILED
             //Dejamos el balance inicial y marcamos la transacción como fallida
-            log.error("Failed deposit");
+            log.warn("Failed deposit");
             log.debug(e.getMessage());
             transactionEntity.setBalanceAfter(balanceBefore);
             transactionEntity.setStatus(TransactionStatus.FAILED);
@@ -121,12 +121,10 @@ public class AccountBalanceService {
                 : account.getDailyWithdrawalLimit();
 
         if (amount.compareTo(dailyLimit) > 0) {
-            log.error("Daily withdrawal limit was exceeded");
             throw new DailyWithdrawalLimitExceededException();
         }
 
         if (account.getBalance().compareTo(amount) < 0) {
-            log.error("Not enough balance in account");
             throw new NotEnoughBalanceException();
         }
 
@@ -180,7 +178,6 @@ public class AccountBalanceService {
         if (!destinationAccount.getCustomerId().equals(authentication.getCustomerId())) {
             var response = client.validateCustomer(authentication.getCustomerId());
             if (!response.isExists() || !response.isActive()) {
-                log.warn("Destination customer does not exist");
                 throw new UsernameNotFoundException("Destination customer does not exist");
             }
         }
@@ -188,7 +185,6 @@ public class AccountBalanceService {
         // check if the origin customer is active
         var response = client.validateCustomer(authentication.getCustomerId());
         if (!response.isExists() || !response.isActive()) {
-            log.warn("Origin customer does not exist");
             throw new UsernameNotFoundException("Origin customer does not exist");
         }
         // check if origin customer is owner of origin account
@@ -237,8 +233,7 @@ public class AccountBalanceService {
             transactions.forEach(transaction -> transaction.setStatus(TransactionStatus.COMPLETED));
             log.info("Successful transfer");
         } catch (Exception e) {
-            log.error("Not enough balance for transfer");
-            log.warn("Failed transfer");
+            log.warn("Failed transfer: Not enough balance for transfer");
             log.debug(e.getMessage());
             transactions.forEach(transaction -> transaction.setStatus(TransactionStatus.FAILED));
         }

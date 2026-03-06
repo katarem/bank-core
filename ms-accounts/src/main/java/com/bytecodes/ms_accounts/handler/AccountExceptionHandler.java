@@ -8,6 +8,7 @@ import com.bytecodes.ms_accounts.handler.exceptions.DailyWithdrawalLimitExceeded
 import com.bytecodes.ms_accounts.handler.exceptions.NotEnoughBalanceException;
 import com.bytecodes.ms_accounts.handler.exceptions.NotOwnAccountException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -26,16 +27,17 @@ import java.util.Arrays;
  * Clase que manejará las excepciones globales
  */
 @RestControllerAdvice
+@Slf4j
 public class AccountExceptionHandler {
 
     @ExceptionHandler(value = {
             CreateAccountLimitExceededException.class,
             CustomerIsInactiveException.class,
-                NotEnoughBalanceException.class,
+            NotEnoughBalanceException.class,
             DailyWithdrawalLimitExceededException.class
     })
     public ResponseEntity<ErrorDetails> handleBusinessExceptions(RuntimeException ex) {
-
+        log.warn("Business rule violation: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(ErrorDetails.builder()
                         .code("BUSINESS_RULE_VIOLATION")
@@ -49,6 +51,8 @@ public class AccountExceptionHandler {
 
         var status = ex.status() > 0 ? HttpStatusCode.valueOf(ex.status()) : HttpStatus.BAD_GATEWAY;//En pruebas se identificó que sí está abajo el ms-customer el status devuelto es -1 con el mensaje ConnectionRefused
         String message = "Ha ocurrido un error interno de comunicación. Intente más tarde. Sí el problema persiste contacte al administrador";
+
+        log.error("Customer service communication error status={} message={}", ex.status(), ex.getMessage(), ex);
 
         ErrorDetails error = ErrorDetails.builder()
                 .code("CUSTOMER_SERVICE_ERROR")
@@ -95,6 +99,8 @@ public class AccountExceptionHandler {
             }
         }
 
+        log.warn("Malformed request body: {}", message);
+
         ErrorDetails error = ErrorDetails.builder()
                 .code("INVALID_REQUEST")
                 .message(message)
@@ -111,11 +117,13 @@ public class AccountExceptionHandler {
             errors.append(error.getDefaultMessage()).append(",");
         }
 
+        log.warn("Validation error: {}", errors);
+
         return ResponseEntity
                 .badRequest()
                 .body(ErrorDetails.builder()
                         .code("INVALID_FIELDS")
-                        .message(errors.toString())
+                        .message(errors.substring(0, errors.toString().length() - 1))
                         .timestamp(Instant.now())
                         .build());
 
@@ -125,6 +133,9 @@ public class AccountExceptionHandler {
     public ResponseEntity<ErrorDetails> badTypesException(MethodArgumentTypeMismatchException ex) {
 
         String message =  ex.getRequiredType() != null ? ex.getPropertyName() + ": " + ex.getRequiredType().getName() : ex.getPropertyName();
+
+        log.warn("Invalid parameter type: {}", message);
+
         return ResponseEntity
                 .badRequest()
                 .body(ErrorDetails.builder()
@@ -137,6 +148,9 @@ public class AccountExceptionHandler {
 
     @ExceptionHandler(NotOwnAccountException.class)
     public ResponseEntity<ErrorDetails> notOwnAccount(NotOwnAccountException ex) {
+
+        log.warn("Account access denied: {}", ex.getMessage());
+
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
                 ErrorDetails.builder()
                         .code("ACCOUNT_ACCESS_NOT_GRANTED")
@@ -146,8 +160,11 @@ public class AccountExceptionHandler {
         );
     }
 
-   @ExceptionHandler({AccountNotFoundException.class, UsernameNotFoundException.class})
+   @ExceptionHandler(AccountNotFoundException.class)
     public ResponseEntity<ErrorDetails> accountNotFound(Exception ex) {
+
+       log.warn(ex.getMessage());
+
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                 ErrorDetails.builder()
                         .code("ACCOUNT_NOT_FOUND")
@@ -157,8 +174,25 @@ public class AccountExceptionHandler {
         );
     }
 
+    @ExceptionHandler(UsernameNotFoundException.class)
+    public ResponseEntity<ErrorDetails> usernameNotFound(UsernameNotFoundException ex) {
+
+        log.warn(ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                ErrorDetails.builder()
+                        .code("USER_NOT_FOUND")
+                        .message(ex.getMessage())
+                        .timestamp(Instant.now())
+                        .build()
+        );
+    }
+
     @ExceptionHandler({RuntimeException.class})
-    public ResponseEntity<ErrorDetails> serverError() {
+    public ResponseEntity<ErrorDetails> serverError(RuntimeException ex) {
+
+        log.error("Unhandled runtime exception", ex);
+
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                 ErrorDetails.builder()
                         .code("INTERNAL_SERVER_ERROR")
